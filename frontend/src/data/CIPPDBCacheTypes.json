@@ -453,6 +453,11 @@
     "description": "BitLocker encryption states for managed devices; Windows 365 Cloud PCs are marked encryptedByPlatform"
   },
   {
+    "type": "ManagedDeviceProtectionStates",
+    "friendlyName": "Managed Device Defender State",
+    "description": "Microsoft Defender antivirus state reported by each Intune managed device"
+  },
+  {
     "type": "IntuneAppProtectionPolicies",
     "friendlyName": "Intune App Protection Policies",
     "description": "Intune app protection policies for iOS and Android"
@@ -466,6 +471,16 @@
     "type": "DefenderCVEs",
     "friendlyName": "Defender CVEs",
     "description": "All Defender CVEs for Devices"
+  },
+  {
+    "type": "DefenderMachines",
+    "friendlyName": "Defender Devices",
+    "description": "Devices in Microsoft Defender for Endpoint with their health and antivirus status"
+  },
+  {
+    "type": "DefenderIndicators",
+    "friendlyName": "Defender Indicators",
+    "description": "Custom file, certificate, IP, URL and domain indicators in Microsoft Defender for Endpoint"
   },
   {
     "type": "IntuneAppInstallStatus",

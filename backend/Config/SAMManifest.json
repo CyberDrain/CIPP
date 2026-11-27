@@ -228,6 +228,14 @@
           "type": "Role"
         },
         {
+          "id": "243cded2-bd16-4fd6-a953-ff8177894c3d",
+          "type": "Role"
+        },
+        {
+          "id": "a96d855f-016b-47d7-b51c-1218a98d791c",
+          "type": "Role"
+        },
+        {
           "id": "19b94e34-907c-4f43-bde9-38b1909ed408",
           "type": "Role"
         },
@@ -764,6 +772,22 @@
       "resourceAccess": [
         {
           "id": "41269fc5-d04d-4bfd-bce7-43a51cea049a",
+          "type": "Role"
+        },
+        {
+          "id": "ea8291d3-4b9a-44b5-bc3a-6cea3026dc79",
+          "type": "Role"
+        },
+        {
+          "id": "7e4e1300-e1b9-4102-88ba-f0cb6e6d5974",
+          "type": "Role"
+        },
+        {
+          "id": "a86d9824-b2b6-45f8-b042-16bc4922ed4e",
+          "type": "Role"
+        },
+        {
+          "id": "fc511a58-3adf-4d71-af24-00f13e35e479",
           "type": "Role"
         },
         {

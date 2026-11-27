@@ -14,6 +14,98 @@ import { CippFormContactSelector } from "../../../../components/CippComponents/C
 import { CippDataTable } from "../../../../components/CippTable/CippDataTable";
 import { CippFormLicenseSelector } from '../../../../components/CippComponents/CippFormLicenseSelector'
 import { getCippLicenseTranslation } from '../../../../utils/get-cipp-license-translation'
+import { CippApiDialog } from '../../../../components/CippComponents/CippApiDialog'
+import CippAliasDialog from '../../../../components/CippComponents/CippAliasDialog'
+import { useDialog } from '../../../../hooks/use-dialog'
+import { CippIcons } from '../../../../utils/icon-registry'
+
+const memberTypes = {
+  '#microsoft.graph.group': 'Group',
+  '#microsoft.graph.device': 'Device',
+  '#microsoft.graph.orgContact': 'Contact',
+  '#microsoft.graph.servicePrincipal': 'Service Principal',
+}
+const memberType = (member) => memberTypes[member?.['@odata.type']] ?? 'Member'
+
+// Address changes apply immediately through row actions rather than on Submit, so the list loads
+// under its own query key: refetching the page's ListGroups query resets the form and would
+// discard whatever else the operator has edited but not yet saved.
+const GroupEmailAddresses = ({ groupId, groupType, groupName, tenantFilter }) => {
+  const aliasDialog = useDialog()
+  const queryKey = `GroupEmailAddresses-${tenantFilter}-${groupId}`
+  const addresses = ApiGetCall({
+    url: `/api/ListGroups?groupID=${groupId}&tenantFilter=${tenantFilter}&groupType=${groupType}`,
+    queryKey,
+  })
+  // Exchange marks the primary address with an upper-case SMTP: prefix and aliases with smtp:
+  const rows = (addresses.data?.emailAddresses ?? [])
+    .filter((address) => /^smtp:/i.test(address))
+    .map((address) => ({
+      Address: address.slice(5),
+      Type: address.startsWith('SMTP:') ? 'Primary' : 'Alias',
+    }))
+    .sort((a, b) => (a.Type === b.Type ? 0 : a.Type === 'Primary' ? -1 : 1))
+
+  const group = { groupId, groupType, groupName, tenantFilter }
+  const api = { type: 'POST', url: '/api/EditGroup', multiPost: false, relatedQueryKeys: [queryKey] }
+  const actions = [
+    {
+      ...api,
+      label: 'Make Primary',
+      icon: <CippIcons.Star />,
+      data: { ...group, PrimarySmtpAddress: 'Address' },
+      confirmText:
+        'Make [Address] the primary email address of this group? The current primary address is kept as an alias.',
+      condition: (row) => row?.Type === 'Alias',
+    },
+    {
+      ...api,
+      label: 'Remove Alias',
+      icon: <CippIcons.Delete />,
+      data: { ...group, RemovedAliases: 'Address' },
+      confirmText: 'Remove the alias [Address] from this group?',
+      condition: (row) => row?.Type === 'Alias',
+    },
+  ]
+
+  return (
+    <>
+      <CippDataTable
+        title="Email Addresses"
+        data={rows}
+        isFetching={addresses.isFetching}
+        simpleColumns={['Address', 'Type']}
+        actions={actions}
+        refreshFunction={addresses.refetch}
+        cardButton={
+          <Button
+            startIcon={<CippIcons.AlternateEmail />}
+            onClick={() => aliasDialog.handleOpen()}
+            variant="outlined"
+            size="small"
+          >
+            Add Alias
+          </Button>
+        }
+      />
+      <CippApiDialog
+        createDialog={aliasDialog}
+        title="Add Aliases"
+        row={group}
+        api={{
+          ...api,
+          confirmText: 'Add the specified aliases to this group?',
+          customDataformatter: (row, action, formData) => ({
+            ...group,
+            AddedAliases: formData?.AddedAliases ?? [],
+          }),
+        }}
+      >
+        {({ formHook }) => <CippAliasDialog formHook={formHook} target="group" />}
+      </CippApiDialog>
+    </>
+  )
+}
 
 const EditGroup = () => {
   const router = useRouter()
@@ -48,6 +140,7 @@ const EditGroup = () => {
       AddContact: [],
       RemoveContact: [],
       AddDevice: [],
+      RemoveDevice: [],
       AddLicenses: [],
       RemoveLicenses: [],
       AddSendAs: [],
@@ -70,7 +163,7 @@ const EditGroup = () => {
             displayName: o.displayName,
           })) || []),
           ...(groupInfo.data?.members?.map((m) => ({
-            type: m?.['@odata.type'] === '#microsoft.graph.orgContact' ? 'Contact' : 'Member',
+            type: memberType(m),
             userPrincipalName: m.userPrincipalName ?? m.mail,
             displayName: m.displayName,
           })) || []),
@@ -119,6 +212,7 @@ const EditGroup = () => {
           AddContact: [],
           RemoveContact: [],
           AddDevice: [],
+          RemoveDevice: [],
           AddLicenses: [],
           RemoveLicenses: [],
           AddSendAs: [],
@@ -388,24 +482,25 @@ const EditGroup = () => {
                   disabled={groupInfo.isFetching}
                   options={
                     groupInfo.data?.members
-                      ?.filter((m) => m?.["@odata.type"] !== "#microsoft.graph.orgContact")
+                      ?.filter((m) => !['Contact', 'Device'].includes(memberType(m)))
                       ?.map((m) => {
-                        const groupType = m.mailEnabled && !m.securityEnabled
-                          ? "Distribution Group"
-                          : m.mailEnabled && m.securityEnabled
-                          ? "Mail-Enabled Security Group"
-                          : "Security Group";
+                        const type =
+                          memberType(m) !== 'Group'
+                            ? memberType(m)
+                            : m.mailEnabled && !m.securityEnabled
+                              ? 'Distribution Group'
+                              : m.mailEnabled && m.securityEnabled
+                                ? 'Mail-Enabled Security Group'
+                                : 'Security Group'
                         return {
-                          label: m.userPrincipalName
-                            ? `${m.displayName} (${m.userPrincipalName})`
-                            : `${m.displayName} (${groupType})`,
+                          label: `${m.displayName} (${m.userPrincipalName || type})`,
                           value: m.id,
                           addedFields: {
                             userPrincipalName: m.userPrincipalName,
                             displayName: m.displayName,
                             id: m.id,
                           },
-                        };
+                        }
                       }) || []
                   }
                   sortOptions={true}
@@ -457,6 +552,33 @@ const EditGroup = () => {
                   sortOptions={true}
                 />
               </Grid>
+
+              {groupType !== 'Distribution List' && groupType !== 'Mail-Enabled Security' && (
+                <Grid size={{ xs: 12 }}>
+                  <CippFormComponent
+                    type="autoComplete"
+                    name="RemoveDevice"
+                    label="Remove Devices"
+                    formControl={formControl}
+                    multiple={true}
+                    creatable={false}
+                    isFetching={groupInfo.isFetching}
+                    disabled={groupInfo.isFetching}
+                    options={
+                      groupInfo.data?.members
+                        ?.filter((m) => memberType(m) === 'Device')
+                        ?.map((m) => ({
+                          label: m.operatingSystem
+                            ? `${m.displayName} (${m.operatingSystem})`
+                            : m.displayName,
+                          value: m.id,
+                          addedFields: { displayName: m.displayName },
+                        })) || []
+                    }
+                    sortOptions={true}
+                  />
+                </Grid>
+              )}
 
               {['Distribution List', 'Mail-Enabled Security', 'Microsoft 365'].includes(groupType) && (
                 <>
@@ -547,6 +669,18 @@ const EditGroup = () => {
                     />
                   </Grid>
                 </>
+              )}
+
+              {['Distribution List', 'Mail-Enabled Security', 'Microsoft 365'].includes(groupType) && (
+                <Grid size={{ xs: 12 }}>
+                  <Divider sx={{ my: 2 }} />
+                  <GroupEmailAddresses
+                    groupId={groupId}
+                    groupType={groupType}
+                    groupName={groupInfo.data?.groupInfo?.displayName}
+                    tenantFilter={tenantFilter}
+                  />
+                </Grid>
               )}
 
               <Grid size={{ xs: 12 }}>

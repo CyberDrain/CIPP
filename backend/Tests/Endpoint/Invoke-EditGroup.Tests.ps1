@@ -270,6 +270,23 @@ Describe 'Invoke-EditGroup - membership' {
             }
         }
 
+        It 'reports a member without a sign-in name by display name and ID' {
+            $Request = New-GroupRequest -GroupType 'Security' -Body @{
+                RemoveMember = @([pscustomobject]@{
+                        label       = 'Nested (Security Group)'
+                        value       = 'nested-guid'
+                        addedFields = [pscustomobject]@{ userPrincipalName = $null; displayName = 'Nested'; id = 'nested-guid' }
+                    })
+            }
+            Mock -CommandName New-GraphBulkRequest -MockWith {
+                @([pscustomobject]@{ id = 'removeMember-nested-guid'; status = 204 })
+            }
+
+            $Response = Invoke-EditGroup -Request $Request
+
+            $Response.Body.Results | Should -Contain 'Success - Removed member Nested (nested-guid) from All Office group'
+        }
+
         It 'uses Remove-DistributionGroupMember for a distribution list' {
             $Request = New-GroupRequest -GroupType 'Distribution List' -Body @{
                 RemoveMember = @(New-Member -Upn 'sseck@contoso.com' -Value 'user-guid')
@@ -374,6 +391,41 @@ Describe 'Invoke-EditGroup - membership' {
             Should -Invoke New-GraphBulkRequest -Times 1 -Exactly -ParameterFilter {
                 $Requests[0].body.'members@odata.bind' -contains 'https://graph.microsoft.com/v1.0/directoryObjects/device-guid'
             }
+        }
+
+        It 'removes a device from a security group and reports it by name and ID' {
+            $Request = New-GroupRequest -GroupType 'Security' -Body @{
+                RemoveDevice = @([pscustomobject]@{
+                        label       = 'LAPTOP-01 (Windows)'
+                        value       = 'device-guid'
+                        addedFields = [pscustomobject]@{ displayName = 'LAPTOP-01' }
+                    })
+            }
+            Mock -CommandName New-GraphBulkRequest -MockWith {
+                @([pscustomobject]@{ id = 'removeDevice-device-guid'; status = 204 })
+            }
+
+            $Response = Invoke-EditGroup -Request $Request
+
+            Should -Invoke New-GraphBulkRequest -Times 1 -Exactly -ParameterFilter {
+                $Requests[0].method -eq 'DELETE' -and
+                $Requests[0].url -eq 'groups/group-guid/members/device-guid/$ref'
+            }
+            $Response.Body.Results | Should -Contain 'Success - Removed device LAPTOP-01 (device-guid) from All Office group'
+        }
+
+        It 'rejects the whole request with 400 when a device removal targets a distribution list' {
+            $Request = New-GroupRequest -GroupType 'Distribution List' -Body @{
+                RemoveDevice = @([pscustomobject]@{ label = 'LAPTOP-01'; value = 'device-guid' })
+                AddMember    = @(New-Member -Upn 'sseck@contoso.com' -Value 'user-guid')
+            }
+
+            $Response = Invoke-EditGroup -Request $Request
+
+            $Response.StatusCode | Should -Be ([HttpStatusCode]::BadRequest)
+            $Response.Body.Results | Should -Be 'Devices cannot be removed from a Distribution List group. No changes were made.'
+            Should -Invoke New-GraphBulkRequest -Times 0 -Exactly
+            Should -Invoke New-ExoBulkRequest -Times 0 -Exactly
         }
     }
 
@@ -750,5 +802,111 @@ Describe 'Invoke-EditGroup - send permissions' {
 
         $Response.Body.Results | Should -Contain 'Success - Granted boss@contoso.com Send As on All Office group'
         $Response.Body.Results | Should -Contain 'Success - Granted keep@contoso.com Send on Behalf on All Office group'
+    }
+}
+
+# Aliases ride the Exchange bulk batch as one EmailAddresses add/remove call. The primary address is
+# a separate direct call after the batch: Exchange refuses EmailAddresses and PrimarySmtpAddress
+# together, and a new primary that was just added as an alias needs the alias to land first.
+Describe 'Invoke-EditGroup - email addresses' {
+    BeforeEach {
+        Mock -CommandName Write-LogMessage -MockWith { }
+        Mock -CommandName New-GraphGetRequest -MockWith { [pscustomobject]@{ id = 'group-guid'; displayName = 'All Office'; mail = 'office@contoso.com' } }
+        Mock -CommandName New-GraphBulkRequest -MockWith { @() }
+        Mock -CommandName New-ExoBulkRequest -MockWith { @() }
+        Mock -CommandName New-ExoRequest -MockWith { @() }
+    }
+
+    It 'sends alias adds and removes on a <GroupType> as one <Cmdlet> call' -ForEach @(
+        @{ GroupType = 'Microsoft 365'; Cmdlet = 'Set-UnifiedGroup'; Bypass = $false }
+        @{ GroupType = 'Distribution List'; Cmdlet = 'Set-DistributionGroup'; Bypass = $true }
+        @{ GroupType = 'Mail-Enabled Security'; Cmdlet = 'Set-DistributionGroup'; Bypass = $true }
+    ) {
+        # The page posts added aliases as plain strings and removed ones as autocomplete options
+        $Request = New-GroupRequest -GroupType $GroupType -Body @{
+            AddedAliases   = @('new@contoso.com', 'smtp:prefixed@contoso.com')
+            RemovedAliases = @([pscustomobject]@{ label = 'old@contoso.com'; value = 'old@contoso.com' })
+        }
+
+        $null = Invoke-EditGroup -Request $Request
+
+        Should -Invoke New-ExoBulkRequest -Times 1 -Exactly -ParameterFilter {
+            $Ops = @($cmdletArray | Where-Object { $_.CmdletInput.CmdletName -eq $Cmdlet })
+            $Change = $Ops[0].CmdletInput.Parameters.EmailAddresses
+            $Ops.Count -eq 1 -and
+            $Ops[0].CmdletInput.Parameters.Identity -eq 'group-guid' -and
+            $Ops[0].CmdletInput.Parameters.ContainsKey('BypassSecurityGroupManagerCheck') -eq $Bypass -and
+            $Change.'@odata.type' -eq '#Exchange.GenericHashTable' -and
+            ($Change.add -join ',') -eq 'smtp:new@contoso.com,smtp:prefixed@contoso.com' -and
+            ($Change.remove -join ',') -eq 'smtp:old@contoso.com'
+        }
+    }
+
+    It 'reports each alias change back to the operator' {
+        $Request = New-GroupRequest -GroupType 'Microsoft 365' -Body @{
+            AddedAliases   = @('new@contoso.com')
+            RemovedAliases = @([pscustomobject]@{ label = 'old@contoso.com'; value = 'old@contoso.com' })
+        }
+
+        $Response = Invoke-EditGroup -Request $Request
+
+        $Response.Body.Results | Should -Contain 'Success - Added alias new@contoso.com to All Office group'
+        $Response.Body.Results | Should -Contain 'Success - Removed alias old@contoso.com from All Office group'
+    }
+
+    It 'reports an Exchange rejection of the alias change as an error' {
+        Mock -CommandName New-ExoBulkRequest -MockWith {
+            param($cmdletArray)
+            @([pscustomobject]@{
+                    target        = 'group-guid'
+                    error         = 'The proxy address "smtp:new@contoso.com" is already being used.'
+                    OperationGuid = $cmdletArray[0].OperationGuid
+                })
+        }
+        $Request = New-GroupRequest -GroupType 'Distribution List' -Body @{ AddedAliases = @('new@contoso.com') }
+
+        $Response = Invoke-EditGroup -Request $Request
+
+        @($Response.Body.Results) -like 'Error - *already being used*' | Should -HaveCount 1
+        @($Response.Body.Results) -like 'Success - Added alias*' | Should -HaveCount 0
+    }
+
+    It 'sets the primary address on a <GroupType> through a direct <Cmdlet> call' -ForEach @(
+        @{ GroupType = 'Microsoft 365'; Cmdlet = 'Set-UnifiedGroup' }
+        @{ GroupType = 'Distribution List'; Cmdlet = 'Set-DistributionGroup' }
+        @{ GroupType = 'Mail-Enabled Security'; Cmdlet = 'Set-DistributionGroup' }
+    ) {
+        $Request = New-GroupRequest -GroupType $GroupType -Body @{ PrimarySmtpAddress = 'sales@contoso.com' }
+
+        $Response = Invoke-EditGroup -Request $Request
+
+        Should -Invoke New-ExoRequest -Times 1 -Exactly -ParameterFilter {
+            $cmdlet -eq $Cmdlet -and
+            $cmdParams.Identity -eq 'group-guid' -and
+            $cmdParams.PrimarySmtpAddress -eq 'sales@contoso.com' -and
+            -not $cmdParams.ContainsKey('EmailAddresses')
+        }
+        $Response.Body.Results | Should -Contain 'Success - Set primary email address of All Office group to sales@contoso.com. The previous address is kept as an alias.'
+    }
+
+    It 'reports a rejected primary address as an error' {
+        Mock -CommandName New-ExoRequest -MockWith { throw 'The domain fabrikam.com is not an accepted domain.' }
+        $Request = New-GroupRequest -GroupType 'Microsoft 365' -Body @{ PrimarySmtpAddress = 'sales@fabrikam.com' }
+
+        $Response = Invoke-EditGroup -Request $Request
+
+        @($Response.Body.Results) -like 'Error - Failed to set primary email address of All Office group to sales@fabrikam.com:*not an accepted domain*' | Should -HaveCount 1
+    }
+
+    It 'ignores email address changes on a security group that has no mailbox' {
+        $Request = New-GroupRequest -GroupType 'Security' -Body @{
+            AddedAliases       = @('new@contoso.com')
+            PrimarySmtpAddress = 'sales@contoso.com'
+        }
+
+        $null = Invoke-EditGroup -Request $Request
+
+        Should -Invoke New-ExoBulkRequest -Times 0 -Exactly
+        Should -Invoke New-ExoRequest -Times 0 -Exactly
     }
 }

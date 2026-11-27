@@ -2,6 +2,9 @@ BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Functions/Format-CIPPCAPolicy.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Functions/Test-IsGuid.ps1')
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Functions/Resolve-CIPPCAPolicyNames.ps1')
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Functions/Convert-CIPPCAUserNameToId.ps1')
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Functions/Convert-CIPPCAGroupNameToId.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Tools/Remove-ODataProperties.ps1')
 
     function Get-CIPPTextReplacement { [CmdletBinding()] param($TenantFilter, $Text, [switch]$EscapeForJson) $Text }
@@ -20,6 +23,7 @@ BeforeAll {
     function Get-CIPPTenantCapabilities { [CmdletBinding()] param($TenantFilter) }
     function ConvertTo-CIPPODataFilterValue { param($Value, $Type) $Value }
     function Sync-CIPPGSAFilteringProfile { [CmdletBinding()] param($ProfileTemplate, $PolicyTemplates, $TenantFilter) }
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Functions/Get-CIPPCAUnresolvedVariable.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/New-CIPPCAPolicy.ps1')
 
     $script:TenantProfileId = '33333333-3333-3333-3333-333333333333'

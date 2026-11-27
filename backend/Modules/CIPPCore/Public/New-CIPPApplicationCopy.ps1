@@ -23,7 +23,7 @@ function New-CIPPApplicationCopy {
             $Type = 'ServicePrincipal'
         }
         if (!$ExistingApp -and !$ExistingAppRoleAssignments) {
-            Write-LogMessage -message "Failed to add $App to tenant. This app does not exist or does not have any consented permissions." -tenant $tenant -API 'Application Copy' -sev error
+            Write-LogMessage -message "Failed to add $App to tenant. This app does not exist or does not have any consented permissions." -tenant $tenant -API 'Application Copy' -sev Error
             continue
         }
         if ($Type -eq 'Application') {
@@ -49,6 +49,7 @@ function New-CIPPApplicationCopy {
             Write-Information "Creating service principal with ID: $($App)"
             $Body = @{
                 appId = $App
+                tags  = @('WindowsAzureActiveDirectoryIntegratedApp')
             }
             $Body = $Body | ConvertTo-Json -Compress
             Write-Information ($Body | ConvertTo-Json -Depth 10)

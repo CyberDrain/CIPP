@@ -69,7 +69,7 @@ const Page = () => {
     waiting: waiting,
   })
   const userRequest = ApiGetCall({
-    url: `/api/ListUserMailboxDetails?UserId=${userId}&tenantFilter=${userSettingsDefaults.currentTenant}&userMail=${graphUserRequest.data?.[0]?.userPrincipalName}`,
+    url: `/api/ListUserMailboxDetails?UserId=${userId}&tenantFilter=${userSettingsDefaults.currentTenant}&userMail=${encodeURIComponent(graphUserRequest.data?.[0]?.userPrincipalName ?? '')}`,
     queryKey: `Mailbox-${userId}`,
     waiting: waiting && !!graphUserRequest.data?.[0]?.userPrincipalName,
   })
@@ -116,6 +116,14 @@ const Page = () => {
     url: `/api/ListUserMailboxRules?UserId=${userId}&tenantFilter=${userSettingsDefaults.currentTenant}`,
     queryKey: `MailboxRules-${userId}`,
     waiting: waiting,
+  })
+
+  const mobileDevicesRequest = ApiGetCall({
+    url: `/api/ListMailboxMobileDevices?tenantFilter=${userSettingsDefaults.currentTenant}&Mailbox=${encodeURIComponent(
+      graphUserRequest.data?.[0]?.userPrincipalName ?? ''
+    )}`,
+    queryKey: `MobileDevices-${userSettingsDefaults.currentTenant}-${userId}`,
+    waiting: waiting && !!graphUserRequest.data?.[0]?.userPrincipalName,
   })
 
   const junkEmailConfigRequest = ApiGetCall({
@@ -170,15 +178,16 @@ const Page = () => {
       if (!group) return false
 
       return (
-        // Exact match on mail address
-        (group.mail && group.mail === userIdentifier) ||
+        // Exact match on mail address (SMTP addresses are case-insensitive)
+        (typeof group.mail === 'string' &&
+          group.mail.toLowerCase() === userIdentifier.toLowerCase()) ||
         // Exact match on display name
         (group.displayName && group.displayName === userIdentifier) ||
-        // Partial match - permission identifier starts with group display name (handles timestamps)
-        (group.displayName &&
-          typeof group.displayName === 'string' &&
-          typeof userIdentifier === 'string' &&
-          userIdentifier.startsWith(group.displayName))
+        // Display name followed only by a numeric timestamp suffix. Any other suffix is a
+        // different object: "IT Support" is not the group "IT".
+        (typeof group.displayName === 'string' &&
+          userIdentifier.startsWith(group.displayName) &&
+          /^\d+$/.test(userIdentifier.slice(group.displayName.length)))
       )
     })
 
@@ -561,6 +570,168 @@ const Page = () => {
 
   const data = userRequest.data?.[0]
 
+  const compose = data?.MessageConfiguration
+  const onOff = (value, on = 'On', off = 'Off') =>
+    value === true ? on : value === false ? off : 'Unknown'
+  const readReceiptLabels = {
+    DoNotAutomaticallySend: 'Ask the user each time',
+    AlwaysSend: 'Always send a receipt',
+    NeverSend: 'Never send a receipt',
+  }
+  const composeSettingsItems = [
+    {
+      label: 'Undo send',
+      value:
+        compose?.MailSendUndoInterval == null
+          ? 'Unknown'
+          : compose.MailSendUndoInterval > 0
+            ? `${compose.MailSendUndoInterval} seconds`
+            : 'Off',
+    },
+    { label: 'Always show From', value: onOff(compose?.AlwaysShowFrom, 'Yes', 'No') },
+    { label: 'Always show Bcc', value: onOff(compose?.AlwaysShowBcc, 'Yes', 'No') },
+    { label: 'Forgotten attachment reminder', value: onOff(compose?.CheckForForgottenAttachments) },
+    {
+      label: 'Default reply action',
+      value: onOff(compose?.IsReplyAllTheDefaultResponse, 'Reply all', 'Reply'),
+    },
+    {
+      label: 'Message format',
+      value: { Html: 'HTML', PlainText: 'Plain text' }[compose?.DefaultFormat] ?? 'Unknown',
+    },
+    {
+      label: 'Read receipt requests',
+      value: readReceiptLabels[compose?.ReadReceiptResponse] ?? 'Unknown',
+    },
+    { label: 'Link previews', value: onOff(compose?.LinkPreviewEnabled) },
+    {
+      label: 'Default font',
+      value: compose?.DefaultFontName
+        ? `${compose.DefaultFontName}, size ${compose.DefaultFontSize}, ${compose.DefaultFontColor}`
+        : 'Unknown',
+    },
+  ]
+  const formatOptions = [
+    { label: 'HTML', value: 'Html' },
+    { label: 'Plain text', value: 'PlainText' },
+  ]
+  const fontOptions = [
+    'Aptos',
+    'Arial',
+    'Calibri',
+    'Cambria',
+    'Georgia',
+    'Helvetica',
+    'Segoe UI',
+    'Tahoma',
+    'Times New Roman',
+    'Trebuchet MS',
+    'Verdana',
+  ].map((font) => ({ label: font, value: font }))
+  const readReceiptOptions = Object.entries(readReceiptLabels).map(([value, label]) => ({
+    label,
+    value,
+  }))
+  const composeSettingsActions = [
+    {
+      label: 'Edit compose settings',
+      type: 'POST',
+      url: '/api/ExecSetMailboxComposeSettings',
+      icon: <CippIcons.Edit />,
+      // Switches cannot say "unknown", so editing waits until the current settings have been read
+      condition: () => typeof compose?.AlwaysShowFrom === 'boolean',
+      relatedQueryKeys: [`Mailbox-${userId}`],
+      confirmText: 'Change the Outlook compose settings for [UPN]?',
+      defaultvalues: {
+        MailSendUndoInterval: compose?.MailSendUndoInterval ?? 0,
+        AlwaysShowFrom: compose?.AlwaysShowFrom,
+        AlwaysShowBcc: compose?.AlwaysShowBcc,
+        CheckForForgottenAttachments: compose?.CheckForForgottenAttachments,
+        IsReplyAllTheDefaultResponse: compose?.IsReplyAllTheDefaultResponse,
+        LinkPreviewEnabled: compose?.LinkPreviewEnabled,
+        DefaultFormat: formatOptions.find((o) => o.value === compose?.DefaultFormat),
+        ReadReceiptResponse: readReceiptOptions.find((o) => o.value === compose?.ReadReceiptResponse),
+        DefaultFontName: compose?.DefaultFontName
+          ? { label: compose.DefaultFontName, value: compose.DefaultFontName }
+          : undefined,
+        DefaultFontSize: compose?.DefaultFontSize ?? '',
+        DefaultFontColor: compose?.DefaultFontColor ?? '',
+      },
+      customDataformatter: (row, action, formData) => ({
+        ...formData,
+        tenantFilter: userSettingsDefaults.currentTenant,
+        ID: row.UPN,
+        DefaultFormat: formData.DefaultFormat?.value,
+        ReadReceiptResponse: formData.ReadReceiptResponse?.value,
+        DefaultFontName: formData.DefaultFontName?.value,
+      }),
+      fields: [
+        {
+          type: 'number',
+          name: 'MailSendUndoInterval',
+          label: 'Undo send delay (seconds)',
+          helperText: '0 turns undo send off. Up to 10 seconds.',
+          validators: {
+            required: 'Enter a delay from 0 to 10',
+            min: { value: 0, message: 'Minimum value is 0' },
+            max: { value: 10, message: 'Maximum value is 10' },
+          },
+        },
+        { type: 'switch', name: 'AlwaysShowFrom', label: 'Always show From' },
+        { type: 'switch', name: 'AlwaysShowBcc', label: 'Always show Bcc' },
+        {
+          type: 'switch',
+          name: 'CheckForForgottenAttachments',
+          label: 'Forgotten attachment reminder',
+        },
+        {
+          type: 'switch',
+          name: 'IsReplyAllTheDefaultResponse',
+          label: 'Reply all by default',
+        },
+        { type: 'switch', name: 'LinkPreviewEnabled', label: 'Link previews' },
+        {
+          type: 'autoComplete',
+          name: 'DefaultFormat',
+          label: 'Message format',
+          multiple: false,
+          creatable: false,
+          options: formatOptions,
+          validators: { required: 'Choose a message format' },
+        },
+        {
+          type: 'autoComplete',
+          name: 'ReadReceiptResponse',
+          label: 'Read receipt requests',
+          multiple: false,
+          creatable: false,
+          options: readReceiptOptions,
+          validators: { required: 'Choose how read receipts are handled' },
+        },
+        {
+          type: 'autoComplete',
+          name: 'DefaultFontName',
+          label: 'Default font',
+          multiple: false,
+          creatable: true,
+          options: fontOptions,
+          helperText: 'You can type a font that is not in this list.',
+        },
+        {
+          type: 'number',
+          name: 'DefaultFontSize',
+          label: 'Default font size',
+          helperText: '1-7 is the Outlook scale where 3 is 12pt. 8 to 72 is a point size, so 11 gives 11pt.',
+          validators: {
+            min: { value: 1, message: 'Minimum value is 1' },
+            max: { value: 72, message: 'Maximum value is 72' },
+          },
+        },
+        { type: 'colorPicker', name: 'DefaultFontColor', label: 'Default font colour' },
+      ],
+    },
+  ]
+
   const mailboxPermissionActions = [
     {
       label: 'Remove Permission',
@@ -607,21 +778,24 @@ const Page = () => {
     },
   ]
 
+  const mailboxPermissionsData = userRequest.data?.[0]?.Permissions ?? []
+
   const permissions = [
     {
       id: 1,
       cardLabelBox: {
         cardLabelBoxHeader: userRequest.isFetching ? (
           <CircularProgress size="25px" color="inherit" />
-        ) : userRequest.data?.[0]?.Permissions?.length !== 0 ? (
+        ) : mailboxPermissionsData.length !== 0 ? (
           <CippIcons.Check />
         ) : (
           <CippIcons.Error />
         ),
       },
       text: 'Mailbox Permissions',
-      subtext:
-        userRequest.data?.[0]?.Permissions?.length !== 0
+      subtext: userRequest.isError
+        ? 'Could not load mailbox permissions - refresh to try again'
+        : mailboxPermissionsData.length !== 0
           ? 'Other users or groups have access to this mailbox'
           : 'No other users or groups have access to this mailbox',
       statusColor: 'green.main',
@@ -746,22 +920,24 @@ const Page = () => {
     },
   ]
 
-  // Replace your existing calCard array with this simple version:
+  const calPermissionsData = calPermissions.data ?? []
+
   const calCard = [
     {
       id: 1,
       cardLabelBox: {
         cardLabelBoxHeader: calPermissions.isFetching ? (
           <CircularProgress size="25px" color="inherit" />
-        ) : calPermissions.data?.length !== 0 ? (
+        ) : calPermissionsData.length !== 0 ? (
           <CippIcons.Check />
         ) : (
           <CippIcons.Error />
         ),
       },
       text: 'Calendar permissions',
-      subtext:
-        calPermissions.data?.length !== 0
+      subtext: calPermissions.isError
+        ? 'Could not load calendar permissions - refresh to try again'
+        : calPermissionsData.length !== 0
           ? 'Other users or groups have access to this calendar'
           : 'No other users or groups have access to this calendar',
       statusColor: 'green.main',
@@ -783,11 +959,12 @@ const Page = () => {
           calPermissions.data?.map((permission) => {
             const userIdentifier = permission?.User
             const permissionInfo = getPermissionInfo(permission.User, groupsList)
+            const isExternal = permission?.AccessScope?.startsWith('External')
             return {
-              User: permissionInfo.displayName,
+              User: permission?.ExternalAddress || permissionInfo.displayName,
               AccessRights: permission?.AccessRights?.join(', ') || 'Unknown',
               FolderName: permission?.FolderName || 'Unknown',
-              Type: permissionInfo.type,
+              Type: isExternal ? permission.AccessScope : permissionInfo.type,
               _raw: permission,
             }
           }) || [],
@@ -826,7 +1003,6 @@ const Page = () => {
         offCanvas: {
           children: (data) => {
             const originalUser = data._raw ? data._raw.User : data.User
-            const permissionInfo = getPermissionInfo(originalUser, groupsList)
             return (
               <CippPropertyListCard
                 cardSx={{ p: 0, m: -2 }}
@@ -834,11 +1010,11 @@ const Page = () => {
                 propertyItems={[
                   {
                     label: 'User/Group',
-                    value: permissionInfo.displayName,
+                    value: data.User,
                   },
                   {
                     label: 'Type',
-                    value: permissionInfo.type,
+                    value: data.Type,
                   },
                   {
                     label: 'Access Rights',
@@ -881,21 +1057,24 @@ const Page = () => {
     },
   ]
 
+  const contactPermissionsData = contactPermissions.data ?? []
+
   const contactCard = [
     {
       id: 1,
       cardLabelBox: {
         cardLabelBoxHeader: contactPermissions.isFetching ? (
           <CircularProgress size="25px" color="inherit" />
-        ) : contactPermissions.data?.length !== 0 ? (
+        ) : contactPermissionsData.length !== 0 ? (
           <CippIcons.Check />
         ) : (
           <CippIcons.Error />
         ),
       },
       text: 'Contact permissions',
-      subtext:
-        contactPermissions.data?.length !== 0
+      subtext: contactPermissions.isError
+        ? 'Could not load contact permissions - refresh to try again'
+        : contactPermissionsData.length !== 0
           ? 'Other users or groups have access to this contact folder'
           : 'No other users or groups have access to this contact folder',
       statusColor: 'green.main',
@@ -1079,27 +1258,31 @@ const Page = () => {
     },
   ]
 
+  const mailboxRulesData = mailboxRulesRequest.data ?? []
+
   const mailboxRulesCard = [
     {
       id: 1,
       cardLabelBox: {
         cardLabelBoxHeader: mailboxRulesRequest.isFetching ? (
           <CircularProgress size="25px" color="inherit" />
-        ) : mailboxRulesRequest.data?.length !== 0 ? (
+        ) : mailboxRulesData.length !== 0 ? (
           <CippIcons.Check />
         ) : (
           <CippIcons.Error />
         ),
       },
       text: 'Current Mailbox Rules',
-      subtext: mailboxRulesRequest.data?.length
-        ? 'Mailbox rules are configured for this user'
-        : 'No mailbox rules configured for this user',
+      subtext: mailboxRulesRequest.isError
+        ? 'Could not load mailbox rules - refresh to try again'
+        : mailboxRulesData.length !== 0
+          ? 'Mailbox rules are configured for this user'
+          : 'No mailbox rules configured for this user',
       statusColor: 'green.main',
       table: {
         title: 'Mailbox Rules',
         hideTitle: true,
-        data: mailboxRulesRequest.data || [],
+        data: mailboxRulesData,
         refreshFunction: () => mailboxRulesRequest.refetch(),
         isFetching: mailboxRulesRequest.isFetching,
         simpleColumns: ['Enabled', 'Name', 'Description', 'Priority'],
@@ -1180,6 +1363,135 @@ const Page = () => {
     },
   ]
 
+  const mobileDeviceWipePending = (row) =>
+    !!row?.accountOnlyWipeRequestTime &&
+    (!row.accountOnlyWipeAckTime || row.accountOnlyWipeAckTime < row.accountOnlyWipeRequestTime)
+
+  const mobileDeviceAction = (label, icon, flags, confirmText, extra = {}) => ({
+    label,
+    type: 'POST',
+    icon,
+    url: '/api/ExecMailboxMobileDevices',
+    customDataformatter: (row) => {
+      const result = (Array.isArray(row) ? row : [row]).map((r) => ({
+        Userid: graphUserRequest.data?.[0]?.userPrincipalName,
+        deviceid: r?.deviceID,
+        guid: r?.Guid,
+        tenantFilter: userSettingsDefaults.currentTenant,
+        ...flags,
+      }))
+      return Array.isArray(row) ? result : result[0]
+    },
+    confirmText,
+    multiPost: false,
+    relatedQueryKeys: `MobileDevices-${userSettingsDefaults.currentTenant}-${userId}`,
+    ...extra,
+  })
+
+  const mobileDeviceActions = [
+    mobileDeviceAction(
+      'Allow Device',
+      <CippIcons.CheckCircle />,
+      { Quarantine: false, Delete: false },
+      'Are you sure you want to allow the device [deviceFriendlyName] ([deviceModel])?',
+      { condition: (row) => row?.deviceAccessState !== 'Allowed' }
+    ),
+    mobileDeviceAction(
+      'Block Device',
+      <CippIcons.Block />,
+      { Quarantine: true, Delete: false },
+      'Are you sure you want to block the device [deviceFriendlyName] ([deviceModel])?',
+      { condition: (row) => row?.deviceAccessState !== 'Blocked' }
+    ),
+    mobileDeviceAction(
+      'Account-only Wipe',
+      <CippIcons.CleaningServices />,
+      { Wipe: true },
+      'Are you sure you want to wipe the mailbox data from the device [deviceFriendlyName] ([deviceModel])? Only the email, calendar and contacts of this account are removed; the rest of the device is left alone. The wipe runs the next time the device connects.',
+      {
+        condition: (row) => !mobileDeviceWipePending(row),
+        hideCondition: (row) => mobileDeviceWipePending(row),
+      }
+    ),
+    mobileDeviceAction(
+      'Cancel Wipe',
+      <CippIcons.Undo />,
+      { CancelWipe: true },
+      'Are you sure you want to cancel the pending wipe for the device [deviceFriendlyName] ([deviceModel])?',
+      {
+        condition: (row) => mobileDeviceWipePending(row),
+        hideCondition: (row) => !mobileDeviceWipePending(row),
+      }
+    ),
+    mobileDeviceAction(
+      'Delete Device',
+      <CippIcons.Delete />,
+      { Quarantine: false, Delete: true },
+      'Are you sure you want to delete the device [deviceFriendlyName] ([deviceModel])? This action cannot be undone.'
+    ),
+  ]
+
+  const mobileDevicesData = mobileDevicesRequest.data ?? []
+
+  const mobileDevicesCard = [
+    {
+      id: 1,
+      cardLabelBox: {
+        cardLabelBoxHeader: mobileDevicesRequest.isFetching ? (
+          <CircularProgress size="25px" color="inherit" />
+        ) : mobileDevicesData.length !== 0 ? (
+          <CippIcons.Check />
+        ) : (
+          <CippIcons.Error />
+        ),
+      },
+      text: 'Mobile Devices',
+      subtext: mobileDevicesRequest.isError
+        ? 'Could not load mobile devices - refresh to try again'
+        : mobileDevicesData.length !== 0
+          ? `${mobileDevicesData.length} mobile device${mobileDevicesData.length === 1 ? ' is' : 's are'} connected to this mailbox`
+          : 'No mobile devices are connected to this mailbox',
+      statusColor: 'green.main',
+      table: {
+        title: 'Mobile Devices',
+        hideTitle: true,
+        data: mobileDevicesData,
+        refreshFunction: () => mobileDevicesRequest.refetch(),
+        isFetching: mobileDevicesRequest.isFetching,
+        simpleColumns: [
+          'deviceFriendlyName',
+          'deviceModel',
+          'deviceOS',
+          'clientType',
+          'deviceAccessState',
+          'lastSuccessSync',
+          'status',
+        ],
+        actions: mobileDeviceActions,
+        offCanvas: {
+          extendedInfoFields: [
+            'deviceFriendlyName',
+            'deviceModel',
+            'deviceOS',
+            'deviceType',
+            'clientType',
+            'clientVersion',
+            'deviceAccessState',
+            'deviceAccessStateReason',
+            'status',
+            'firstSync',
+            'lastSyncAttempt',
+            'lastSuccessSync',
+            'accountOnlyWipeRequestTime',
+            'accountOnlyWipeAckTime',
+            'deviceID',
+          ],
+          actions: mobileDeviceActions,
+        },
+      },
+    },
+  ]
+
   const junkEmailConfigActions = [
     {
       label: 'Remove Entry',
@@ -1199,27 +1511,31 @@ const Page = () => {
     },
   ]
 
+  const junkEmailConfigData = junkEmailConfigRequest.data ?? []
+
   const junkEmailConfigCard = [
     {
       id: 1,
       cardLabelBox: {
         cardLabelBoxHeader: junkEmailConfigRequest.isFetching ? (
           <CircularProgress size="25px" color="inherit" />
-        ) : junkEmailConfigRequest.data?.length !== 0 ? (
+        ) : junkEmailConfigData.length !== 0 ? (
           <CippIcons.Check />
         ) : (
           <CippIcons.Error />
         ),
       },
       text: 'Trusted and Blocked Senders/Domains',
-      subtext: junkEmailConfigRequest.data?.length
-        ? 'Trusted/Blocked senders and domains are configured for this user'
-        : 'No trusted or blocked senders/domains entries for this user',
+      subtext: junkEmailConfigRequest.isError
+        ? 'Could not load trusted and blocked senders - refresh to try again'
+        : junkEmailConfigData.length !== 0
+          ? 'Trusted/Blocked senders and domains are configured for this user'
+          : 'No trusted or blocked senders/domains entries for this user',
       statusColor: 'green.main',
       table: {
         title: 'Trusted and Blocked Senders/Domains',
         hideTitle: true,
-        data: junkEmailConfigRequest.data || [],
+        data: junkEmailConfigData,
         refreshFunction: () => junkEmailConfigRequest.refetch(),
         isFetching: junkEmailConfigRequest.isFetching,
         simpleColumns: ['Type', 'Value'],
@@ -1477,12 +1793,22 @@ const Page = () => {
                 {/* Stacked below lg — a 4/8 split at phone widths leaves both columns too
                     narrow to hold a label, breaking the text one word per line. */}
                 <Grid size={{ xs: 12, lg: 4 }}>
-                  <CippExchangeInfoCard
-                    exchangeData={data}
-                    isLoading={userRequest.isLoading}
-                    isFetching={userRequest.isFetching}
-                    handleRefresh={() => userRequest.refetch()}
-                  />
+                  <Stack spacing={3}>
+                    <CippExchangeInfoCard
+                      exchangeData={data}
+                      isLoading={userRequest.isLoading}
+                      isFetching={userRequest.isFetching}
+                      handleRefresh={() => userRequest.refetch()}
+                    />
+                    <CippPropertyListCard
+                      title="Outlook compose settings"
+                      isFetching={userRequest.isLoading}
+                      showDivider={false}
+                      propertyItems={composeSettingsItems}
+                      actionItems={composeSettingsActions}
+                      data={data?.MailboxActionsData}
+                    />
+                  </Stack>
                 </Grid>
                 <Grid size={{ xs: 12, lg: 8 }}>
                   <Stack spacing={3}>
@@ -1514,6 +1840,11 @@ const Page = () => {
                     <CippBannerListCard
                       isFetching={mailboxRulesRequest.isLoading}
                       items={mailboxRulesCard}
+                      isCollapsible={true}
+                    />
+                    <CippBannerListCard
+                      isFetching={mobileDevicesRequest.isLoading}
+                      items={mobileDevicesCard}
                       isCollapsible={true}
                     />
                     <CippBannerListCard

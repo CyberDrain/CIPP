@@ -15,6 +15,7 @@
   "powershellEquivalent": "Add-CIPPW32ScriptApplication",
   "recommendedBy": [],
   "requiredCapabilities": [
+    "INTUNE_EDU",
     "INTUNE_A",
     "MDM_Services",
     "EMS",
@@ -105,6 +106,13 @@
       "label": "Enable domain squatting detection",
       "omitWhenBlank": true,
       "default": true
+    },
+    "protectedDomains": {
+      "type": "autoComplete",
+      "multiple": true,
+      "creatable": true,
+      "label": "Domain squatting protected domains (empty = URL allowlist domains)",
+      "omitWhenBlank": true
     },
     "companyName": {
       "type": "textField",
@@ -204,6 +212,7 @@
     "webhookEvents": "%webhookEvents%",
     "urlAllowlist": "%urlAllowlist%",
     "domainSquattingEnabled": "%domainSquattingEnabled%",
+    "protectedDomains": "%protectedDomains%",
     "companyName": "%companyName%",
     "productName": "%productName%",
     "supportEmail": "%supportEmail%",

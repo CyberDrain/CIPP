@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { CippIcons } from "../../../../utils/icon-registry"
 import {
+  Alert,
   Button,
   Card,
   CardContent,
@@ -101,6 +102,12 @@ const Page = () => {
   }, [statsQuery.data]);
 
   const stats = useMemo(() => summarize(rows), [rows]);
+  const statsLoadErrorText = "Coverage data could not be loaded for this period.";
+  const statsLoadError = (
+    <Typography variant="body2" sx={{ color: "text.secondary", py: 3, textAlign: "center" }}>
+      {statsLoadErrorText}
+    </Typography>
+  );
 
   const kpis = useMemo(() => {
     const pct = stats.total ? Math.round((stats.processed / stats.total) * 100) : 0;
@@ -325,6 +332,10 @@ const Page = () => {
       <CardContent sx={{ minWidth: 0, overflow: "hidden", "& .apexcharts-canvas": { maxWidth: "100%" } }}>
         {statsQuery.isFetching ? (
           <Skeleton variant="rounded" sx={{ height: 280 }} />
+        ) : statsQuery.isError ? (
+          <Typography variant="body2" sx={{ color: "text.secondary", py: 6, textAlign: "center" }}>
+            {statsLoadErrorText}
+          </Typography>
         ) : !ready ? (
           <Typography
             variant="body2"
@@ -355,7 +366,14 @@ const Page = () => {
               onApply={setDateParams}
             />
 
-            <CippInfoBar data={kpis} isFetching={statsQuery.isFetching} />
+            {statsQuery.isError ? (
+              <Alert severity="error">
+                Could not load search coverage for this period, so the figures below are not shown.
+                Refresh the page or pick a shorter period to try again.
+              </Alert>
+            ) : (
+              <CippInfoBar data={kpis} isFetching={statsQuery.isFetching} />
+            )}
 
             <ChartCard
               title="Window status over time"
@@ -401,6 +419,8 @@ const Page = () => {
               <CardContent>
                 {statsQuery.isFetching ? (
                   <Skeleton variant="rounded" sx={{ height: 200 }} />
+                ) : statsQuery.isError ? (
+                  statsLoadError
                 ) : (
                   <CippCoverageHeatmap
                     rows={rows}
@@ -419,6 +439,8 @@ const Page = () => {
               <CardContent sx={{ pt: 0 }}>
                 {statsQuery.isFetching ? (
                   <Skeleton variant="rounded" sx={{ height: 120 }} />
+                ) : statsQuery.isError ? (
+                  statsLoadError
                 ) : problems.length === 0 ? (
                   <Typography
                     variant="body2"

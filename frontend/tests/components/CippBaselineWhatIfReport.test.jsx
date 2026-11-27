@@ -172,7 +172,12 @@ describe('CippBaselineWhatIfReport', () => {
       body: {
         tenantFilter: 'contoso.onmicrosoft.com',
         simulatedTemplateIds: [],
-        sectionConfig: { alreadyAligned: true, rolloutStages: true },
+        sectionConfig: {
+          alreadyAligned: true,
+          rolloutStages: true,
+          licenseGaps: false,
+          laterWaves: false,
+        },
         brandingPresetId: 'preset-security',
       },
     })
@@ -223,6 +228,8 @@ describe('CippBaselineWhatIfReport', () => {
       expect(lastRequest().body.sectionConfig).toEqual({
         alreadyAligned: false,
         rolloutStages: true,
+        licenseGaps: false,
+        laterWaves: false,
       })
     )
   })

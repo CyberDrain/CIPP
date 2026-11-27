@@ -31,6 +31,7 @@ Tenant and device information uses custom fields, which you create yourself in N
 | NinjaOne Ticket Priority                                   | Optional. Sets the priority on every CIPP-generated ticket: None, Low, Medium or High. Leave blank to send no priority.                                                                                        |
 | Link Tickets to affected Users                             | Sets the ticket requester to the organisation's end user or contact whose email matches the affected user. Unmatched users are noted in the ticket and it is raised without a requester.                        |
 | Consolidate Tickets                                        | Adds repeat alerts with the same title as a comment on the existing open ticket instead of raising a new one. Resolved and closed tickets get a new ticket.                                                     |
+| Close tickets when the alert clears                        | When an alert stops finding anything on two runs in a row, CIPP adds a comment to the ticket it raised for that alert and sets it to Resolved. Tickets someone already resolved or closed are left alone, and tickets raised per affected user are not closed. Appears once **Consolidate Tickets** is enabled. |
 
 ## Preparing NinjaOne
 

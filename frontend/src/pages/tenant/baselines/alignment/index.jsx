@@ -753,6 +753,7 @@ const Page = () => {
   const denyPathDialog = useDialog()
   const [removeOverrideTarget, setRemoveOverrideTarget] = useState(null)
   const removeOverrideDialog = useDialog()
+  const runAllDialog = useDialog()
   // Filtering re-orders the timeline, so expansion state keys on stable event/run
   // identity rather than render index.
   const [expandedEvents, setExpandedEvents] = useState(new Set())
@@ -1136,7 +1137,14 @@ const Page = () => {
       color: 'info',
       // Overrides configure ONE tenant's settings in a dialog - meaningless as a bulk action.
       hideBulk: true,
-      defaultvalues: expiryDefaults,
+      defaultvalues: (row) => {
+        const effectiveTier = (row?.inheritance ?? []).find((tier) => tier.effective)
+        return {
+          ...expiryDefaults(),
+          remediateEnabled: effectiveTier?.remediateEnabled === true,
+          alertEnabled: effectiveTier?.alertEnabled ?? true,
+        }
+      },
       data: {
         action: '!createOverride',
         tenantFilter: 'tenantFilter',
@@ -1160,8 +1168,21 @@ const Page = () => {
               namePrefix="variables"
               initialValues={variableValuesFromExpected(
                 standard,
-                row.expectedValue
+                row.expectedValue,
+                (row.inheritance ?? []).find((tier) => tier.effective)?.value
               )}
+            />
+            <CippFormComponent
+              type="switch"
+              name="remediateEnabled"
+              label="Automatically fix this when the setting drifts"
+              formControl={formHook}
+            />
+            <CippFormComponent
+              type="switch"
+              name="alertEnabled"
+              label="Alert on new deviation"
+              formControl={formHook}
             />
             <CippFormComponent
               type="textField"
@@ -1442,6 +1463,11 @@ const Page = () => {
         <Stack spacing={0}>
           {propertyList(properties)}
           <Stack spacing={2} sx={{ p: 2 }}>
+            {findDefinition(row.standardName)?.helpText && (
+              <Typography variant="body2" color="text.secondary">
+                {findDefinition(row.standardName).helpText}
+              </Typography>
+            )}
             {row.status === 'Conflict' && (
               <Alert severity="error">
                 Two baselines configure this standard at the same assignment
@@ -3611,6 +3637,13 @@ const Page = () => {
               <Stack direction="row" spacing={1} sx={{
                 alignItems: "center"
               }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<CippIcons.PlayArrow />}
+                  onClick={runAllDialog.handleOpen}
+                >
+                  Run All Assigned Baselines
+                </Button>
                 <CippQueueTracker
                   queueId={latestBaselineQueueId}
                   queryKey={`ListBaselineAlignment-${currentTenant}`}
@@ -3651,6 +3684,19 @@ const Page = () => {
               ]}
             />
             {dialogs}
+            <CippApiDialog
+              createDialog={runAllDialog}
+              title="Run All Assigned Baselines"
+              api={{
+                url: '/api/ExecBaselineRun',
+                type: 'POST',
+                data: { mode: '!run', tenantFilter: 'tenantFilter' },
+                confirmText:
+                  'Run every baseline assigned to [tenantFilter] now? Stages set to report only will report; stages set to remediate will fix drift, the same as the scheduled run.',
+                relatedQueryKeys,
+              }}
+              row={{ tenantFilter: currentTenant }}
+            />
           </Stack>
         </Container>
       </>

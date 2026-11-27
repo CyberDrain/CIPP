@@ -97,6 +97,8 @@ The Extended Info flyout shows the policy's complete raw JSON, including conditi
 
 **Create template based on policy** saves a policy as a reusable template, which then appears in list-template.
 
+To refresh a template after the policy changed in the tenant, turn on **Replace the template with the same name**: the template is updated in place, keeping its package, instead of a second copy being added. Turn on **Keep the variables added to that template** as well to keep any `%variables%` you put in it: each setting that held a variable keeps it, and every other setting takes the tenant's current value. If a setting holding a variable is gone from the policy, the result lists that variable. When two templates have the same name, nothing is saved; rename one first.
+
 Every property of the policy is captured. Inclusions and exclusions are stored in a form CIPP can translate on redeployment, and everything else carries across, including named locations, authentication strengths, and session controls.
 
 A Global Secure Access security profile is stored by name, the same way users and groups are, and each tenant the template is deployed to needs a security profile with that name. The profile itself is not saved with the template, and the result says so when the policy applies one. To deploy the profile with the policy, save it from the [Security Profiles](../../gsa/security-profiles/README.md) page with **Save as Template**, then link that template in the CA template.

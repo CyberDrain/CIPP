@@ -28,7 +28,11 @@
   {
     "name": "NewMFADevice",
     "label": "Alert when users register new MFA devices",
-    "recommendedRunInterval": "1h"
+    "recommendedRunInterval": "1h",
+    "requiresInput": true,
+    "inputType": "textField",
+    "inputLabel": "Only alert for UPNs matching (comma separated, wildcards and %variables% supported, e.g. breakglass@*). Leave empty for all users",
+    "inputName": "InputValue"
   },
   {
     "name": "LicenseAssignmentErrors",
@@ -614,6 +618,16 @@
     "inputType": "number",
     "inputLabel": "Days until expiry to alert (default: 30)",
     "inputName": "DaysUntilExpiry"
+  },
+  {
+    "name": "DepSyncStatus",
+    "label": "Alert if a DEP token sync fails or has not succeeded in the last X hours",
+    "recommendedRunInterval": "1d",
+    "minimumRunInterval": "4h",
+    "requiresInput": true,
+    "inputType": "number",
+    "inputLabel": "Hours since last successful sync (default: 24)",
+    "inputName": "DepSyncStatusHours"
   },
   {
     "name": "IntuneApprovalRequests",

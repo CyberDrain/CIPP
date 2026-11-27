@@ -40,6 +40,7 @@ function Get-CIPPDBCacheSchedule {
                 'DirectoryRecommendations'
                 'DirectoryRecommendationConfiguration'
                 'CrossTenantAccessPolicy'
+                'CrossTenantPartners'
                 'DefaultAppManagementPolicy'
                 'ActivityBasedTimeoutPolicy'
                 'Settings'
@@ -169,6 +170,7 @@ function Get-CIPPDBCacheSchedule {
                 'IntuneApplications'
                 'IntuneAssignmentFilters'
                 'ManagedDeviceEncryptionStates'
+                'ManagedDeviceProtectionStates'
                 'IntuneAppProtectionPolicies'
                 'IntuneScripts'
                 'IntuneReusableSettings'
@@ -197,9 +199,11 @@ function Get-CIPPDBCacheSchedule {
             )
         }
         Defender                         = @{
-            License = 'DefenderForEndpoint'
+            License = 'DefenderVulnerabilityManagement'
             Types   = @(
                 'DefenderCVEs'
+                'DefenderMachines'
+                'DefenderIndicators'
             )
         }
         DefenderForOffice365             = @{

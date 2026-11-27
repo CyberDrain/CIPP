@@ -83,6 +83,11 @@ export const nativeMenuItems = [
             permissions: ['Identity.User.*'],
           },
           {
+            title: 'Onboarding Wizard',
+            path: '/identity/administration/onboarding-wizard',
+            permissions: ['Identity.User.*'],
+          },
+          {
             title: 'Offboarding Wizard',
             path: '/identity/administration/offboarding-wizard',
             permissions: ['Identity.User.*'],
@@ -198,6 +203,11 @@ export const nativeMenuItems = [
           {
             title: 'Authentication Methods',
             path: '/tenant/administration/authentication-methods',
+            permissions: ['Tenant.Administration.*'],
+          },
+          {
+            title: 'Cross-Tenant Access',
+            path: '/tenant/administration/cross-tenant-access',
             permissions: ['Tenant.Administration.*'],
           },
           {
@@ -325,6 +335,11 @@ export const nativeMenuItems = [
             path: '/tenant/reports/custom-test-report',
             permissions: ['Tenant.Reports.*'],
           },
+          {
+            title: 'Cyber Insurance Report',
+            path: '/tenant/reports/cyber-insurance',
+            permissions: ['Tenant.Reports.*'],
+          },
         ],
       },
       {
@@ -381,12 +396,22 @@ export const nativeMenuItems = [
       },
       {
         title: 'Defender',
-        permissions: ['Security.Alert.*'],
+        permissions: ['Security.Alert.*', 'Security.Defender.*'],
         items: [
           {
             title: 'Defender Status',
             path: '/security/defender/list-defender',
             permissions: ['Security.Alert.*'],
+          },
+          {
+            title: 'Defender Devices',
+            path: '/security/defender/devices',
+            permissions: ['Security.Defender.*'],
+          },
+          {
+            title: 'Defender Indicators',
+            path: '/security/defender/indicators',
+            permissions: ['Security.Defender.*'],
           },
           {
             title: 'Defender Deployment',
@@ -665,6 +690,12 @@ export const nativeMenuItems = [
             permissions: ['Endpoint.MEM.*'],
           },
           {
+            title: 'Setting Search',
+            path: '/endpoint/MEM/setting-search',
+            docsPath: 'endpoint/mem/setting-search',
+            permissions: ['Endpoint.MEM.*'],
+          },
+          {
             title: 'Policy Failures',
             path: '/endpoint/MEM/policy-failures',
             docsPath: 'endpoint/mem/policy-failures',
@@ -835,6 +866,11 @@ export const nativeMenuItems = [
           {
             title: 'Permissions Report',
             path: '/teams-share/reports/permissions-report',
+            permissions: ['Sharepoint.Site.*'],
+          },
+          {
+            title: 'Access Reports',
+            path: '/teams-share/reports/access-reports',
             permissions: ['Sharepoint.Site.*'],
           },
           {
@@ -1158,6 +1194,12 @@ export const nativeMenuItems = [
             docsPath: 'tools/tenant-tools/compare-ca-policies',
             permissions: ['Tenant.ConditionalAccess.*'],
             scope: 'global',
+          },
+          {
+            title: 'Domain Migration',
+            path: '/tenant/tools/domain-migration',
+            docsPath: 'tools/tenant-tools/domain-migration',
+            permissions: ['Tenant.DomainMigration.*'],
           },
         ],
       },

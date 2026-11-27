@@ -89,7 +89,7 @@ function Invoke-ListGroups {
             })
     }
     if ($Members) {
-        $SelectString = 'id,userPrincipalName,displayName,hideFromOutlookClients,hideFromAddressLists,mail,mailEnabled,mailNickname,resourceProvisioningOptions,securityEnabled,visibility,organizationId,onPremisesSamAccountName,membershipRule'
+        $SelectString = 'id,userPrincipalName,displayName,hideFromOutlookClients,hideFromAddressLists,mail,mailEnabled,mailNickname,resourceProvisioningOptions,securityEnabled,visibility,organizationId,onPremisesSamAccountName,membershipRule,operatingSystem'
         $BulkRequestArrayList.add(@{
                 id     = 2
                 method = 'GET'
@@ -106,30 +106,18 @@ function Invoke-ListGroups {
                     url    = "groups/$($GroupID)/owners?`$top=999&select=$SelectString"
                 })
         } else {
-            $OwnerIds = New-ExoRequest -cmdlet 'Get-DistributionGroup' -tenantid $TenantFilter -cmdParams @{Identity = $GroupID } -Select 'ManagedBy' -useSystemMailbox $true | Select-Object -ExpandProperty ManagedBy
-
-            $BulkRequestArrayList.add(@{
-                    id      = 3
-                    method  = 'POST'
-                    url     = 'directoryObjects/getByIds'
-                    body    = @{
-                        ids = @($OwnerIds)
-                    }
-                    headers = @{
-                        'Content-Type' = 'application/json'
-                    }
-                })
+            $ManagedBy = @(New-ExoRequest -cmdlet 'Get-DistributionGroup' -tenantid $TenantFilter -cmdParams @{Identity = $GroupID } -Select 'ManagedBy' -useSystemMailbox $true | Select-Object -ExpandProperty ManagedBy)
         }
     }
 
     $SendOnBehalfIds = @()
     if ($GroupType -eq 'Distribution List' -or $GroupType -eq 'Mail-Enabled Security') {
         # get the outside the organization RequireSenderAuthenticationEnabled setting
-        $DistributionGroupInfo = New-ExoRequest -tenantid $TenantFilter -cmdlet 'Get-DistributionGroup' -cmdParams @{Identity = $GroupID } -Select 'RequireSenderAuthenticationEnabled,GrantSendOnBehalfTo' -useSystemMailbox $true
+        $DistributionGroupInfo = New-ExoRequest -tenantid $TenantFilter -cmdlet 'Get-DistributionGroup' -cmdParams @{Identity = $GroupID } -Select 'RequireSenderAuthenticationEnabled,GrantSendOnBehalfTo,EmailAddresses' -useSystemMailbox $true
         $OnlyAllowInternal = $DistributionGroupInfo.RequireSenderAuthenticationEnabled
         $SendOnBehalfIds = @($DistributionGroupInfo.GrantSendOnBehalfTo | Where-Object { $_ })
     } elseif ($GroupType -eq 'Microsoft 365') {
-        $UnifiedGroupInfo = New-ExoRequest -tenantid $TenantFilter -cmdlet 'Get-UnifiedGroup' -cmdParams @{Identity = $GroupID } -Select 'RequireSenderAuthenticationEnabled,subscriptionEnabled,AutoSubscribeNewMembers,HiddenFromExchangeClientsEnabled,GrantSendOnBehalfTo' -useSystemMailbox $true
+        $UnifiedGroupInfo = New-ExoRequest -tenantid $TenantFilter -cmdlet 'Get-UnifiedGroup' -cmdParams @{Identity = $GroupID } -Select 'RequireSenderAuthenticationEnabled,subscriptionEnabled,AutoSubscribeNewMembers,HiddenFromExchangeClientsEnabled,GrantSendOnBehalfTo,EmailAddresses' -useSystemMailbox $true
         $OnlyAllowInternal = $UnifiedGroupInfo.RequireSenderAuthenticationEnabled
         $SendOnBehalfIds = @($UnifiedGroupInfo.GrantSendOnBehalfTo | Where-Object { $_ })
     } else {
@@ -176,6 +164,18 @@ function Invoke-ListGroups {
     try {
         if ($BulkRequestArrayList.Count -gt 0) {
             $RawGraphRequest = New-GraphBulkRequest -tenantid $TenantFilter -scope 'https://graph.microsoft.com/.default' -Requests @($BulkRequestArrayList) -asapp $true
+            # ManagedBy can hold ids or names; one that does not resolve is kept under its Exchange value
+            $ManagedByOwners = if ($ManagedBy.Count -gt 0) {
+                foreach ($Owner in (Resolve-CIPPDirectoryId -Identity $ManagedBy -TenantFilter $TenantFilter)) {
+                    [PSCustomObject]@{
+                        '@odata.type'     = $Owner.ODataType
+                        id                = $Owner.Id ?? $Owner.Input
+                        displayName       = $Owner.DisplayName ?? $Owner.Label
+                        userPrincipalName = $Owner.UserPrincipalName
+                        mail              = $Owner.Mail
+                    }
+                }
+            }
             # Assigned outside the object so a single holder still serialises as an array
             if ($SendPermissions -and $IsMailEnabledGroup) {
                 $SendOnBehalf = @(($RawGraphRequest | Where-Object { $_.id -eq 4 }).body.value | Where-Object { $_ } | Select-Object id, displayName, userPrincipalName, mail | Sort-Object displayName)
@@ -199,10 +199,12 @@ function Invoke-ListGroups {
                 },
                 @{Name = 'dynamicGroupBool'; Expression = { if ($_.groupTypes -contains 'DynamicMembership') { $true } else { $false } } }
                 members                = @(($RawGraphRequest | Where-Object { $_.id -eq 2 }).body.value | Sort-Object displayName)
-                owners                 = @(($RawGraphRequest | Where-Object { $_.id -eq 3 }).body.value | Sort-Object displayName)
+                owners                 = @(@(($RawGraphRequest | Where-Object { $_.id -eq 3 }).body.value) + @($ManagedByOwners) | Where-Object { $_ } | Sort-Object displayName)
                 allowExternal          = (!$OnlyAllowInternal)
                 sendCopies             = $SendCopies
                 hideFromOutlookClients = if ($GroupType -eq 'Microsoft 365') { $UnifiedGroupInfo.HiddenFromExchangeClientsEnabled } else { $null }
+                # Read from Exchange, where aliases are written; Entra's proxyAddresses lags behind it
+                emailAddresses         = @(($UnifiedGroupInfo ?? $DistributionGroupInfo).EmailAddresses | Where-Object { $_ })
                 sendAs                 = $SendAs
                 sendOnBehalf           = $SendOnBehalf
                 SID                    = (Convert-AzureAdObjectIdToSid -ObjectID $((($RawGraphRequest | Where-Object { $_.id -eq 1 }).body).id))

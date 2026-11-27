@@ -4,6 +4,16 @@ Contributions to CIPP are welcome. The entire project, frontend and backend, liv
 
 Before writing any code, set up a local development environment by following the guide in [setting-up-for-local-development.md](cipp-dev-guide/setting-up-for-local-development.md "mention").
 
+## What CIPP Will Not Build
+
+CIPP manages tenant configuration, identities, licences and security posture. It does not give technicians a view into what users have stored. Feature requests and pull requests that do any of the following will be declined:
+
+- Browse, list, search, preview or export the contents of mailboxes, OneDrive, SharePoint libraries, Teams chats or channels, calendars or contacts. This includes mailbox explorers, file or folder browsers and "largest files" searches.
+- Store user content, or the details that identify it, in CIPP's cache or tables: file and folder names or paths, message subjects, senders, recipients or bodies, chat text and attachment names.
+- Act on individual user items (move, delete, archive or restore a message or file) chosen by browsing them.
+
+Totals and settings are fine: storage used per site or mailbox, item counts, quotas, and site- or tenant-level settings and actions. If a request mixes the two, only the totals and settings part will be accepted. The existing quarantine and message trace pages are security tools and are not a precedent for more.
+
 ## Before You Start
 
 - **File an issue.** If you are fixing a bug, file a complete bug report [on GitHub](https://github.com/CyberDrain/CIPP/issues) and assign it to yourself. If you are adding a feature, create an issue with "Feature Request" in the title and assign it to yourself.

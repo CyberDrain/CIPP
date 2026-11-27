@@ -10,7 +10,7 @@ Baselines is controlled by the **Baselines** flag on the [features.md](../../cip
 
 A baseline is the desired configuration for your tenants. CIPP checks every assigned tenant against it twice a day, shows exactly what deviates, and, where you allow it, corrects the deviation automatically. Standards are grouped into stages so a baseline can roll out gradually, with each stage adding more of the configuration as a tenant graduates into it.
 
-Baselines supersede the classic Standards and Drift pages. While the flag is on, those pages and their scheduled runs are turned off, so only one engine manages your tenants at a time. Your existing Standards templates can be brought across with **Migrate from Standards** on the [Baselines](templates.md) page.
+Baselines supersede the classic Standards and Drift pages. While the flag is on, those pages and their scheduled runs are turned off, so only one engine manages your tenants at a time. Your existing Standards templates can be brought across with **Migrate from Standards** on the [Baselines](templates.md) page. [Migrating from Standards](migrating-from-standards.md) walks through it step by step.
 
 The Fleet Overview is the landing screen for the feature and summarises every tenant covered by a baseline. Use the tabs at the top to move between this overview, [Alignment](alignment.md), and the list of [Baselines](templates.md) themselves.
 

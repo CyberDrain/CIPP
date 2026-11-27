@@ -15,7 +15,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useSettings } from '../../hooks/use-settings'
-import { useBrandingSettings } from './useBrandingSettings'
+import { useBrandingQuery } from './useBrandingSettings'
 import { ServerPdfPane, useServerPdf } from './useServerPdf'
 
 // Which sections the report can carry. `overview` is the page that makes it a report, so it is
@@ -70,7 +70,7 @@ export const LicenseReportButton = ({
   const [dialogOpen, setDialogOpen] = useState(false)
   const [sections, setSections] = useState(DEFAULT_LICENSE_REPORT_SECTIONS)
   const tenantFilter = useSettings().currentTenant
-  const branding = useBrandingSettings()
+  const { branding, ready: brandingReady } = useBrandingQuery()
   const hasData = !!report?.Summary && report.Summary.DataAvailable !== false
   const pdf = useServerPdf({
     url: '/api/ExecGetLicenseReportPdf',
@@ -80,7 +80,7 @@ export const LicenseReportButton = ({
       sections,
       brandingPresetId: branding?.reportDefaults?.licensing ?? '',
     },
-    enabled: dialogOpen,
+    enabled: dialogOpen && brandingReady,
   })
 
   const toggleSection = (key) =>
@@ -201,6 +201,7 @@ export const LicenseReportButton = ({
           <Box sx={{ flex: 1, minWidth: 0, height: '100%' }}>
             <ServerPdfPane
               {...pdf}
+              loading={pdf.loading || !brandingReady}
               title={`Licensing Report - ${tenantName}`}
               errorText="The report could not be generated. License data is read from the reporting cache for this tenant; try again once it has been collected."
             />

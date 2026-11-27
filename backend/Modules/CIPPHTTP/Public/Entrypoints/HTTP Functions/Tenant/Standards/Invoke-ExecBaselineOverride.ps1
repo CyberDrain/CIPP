@@ -10,7 +10,8 @@ function Invoke-ExecBaselineOverride {
         values) fully replaces what the baselines apply. The resolved row's §4.2 columns are
         updated immediately so the UI reflects the new effective configuration; the engine
         enforces it on the next run. createOverride requires a reason and takes an optional
-        expiry, after which the next baseline run removes the override.
+        expiry, after which the next baseline run removes the override. The override carries
+        its own remediateEnabled (default false) and alertEnabled (default true).
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)
@@ -51,10 +52,17 @@ function Invoke-ExecBaselineOverride {
         }
         $ResolvedEntity = $ResolvedEntity | Select-Object -First 1
         $Set = { param($Name, $Value) $ResolvedEntity | Add-Member -NotePropertyName $Name -NotePropertyValue $Value -Force }
+        $Definition = if ($ResolvedEntity) { Get-CIPPBaselineDefinition -Name (($Standard -split '#')[0]) }
+        # Results a compare produced. Accepted and denied rows keep their status so the triage survives.
+        $GradedStatuses = @('Compliant', 'Drift', 'Partially Accepted')
 
         switch ($Action) {
             'createOverride' {
                 $Variables = $Request.Body.variables ?? [PSCustomObject]@{}
+                # Fix drift on this standard automatically for this tenant. Off when omitted.
+                $RemediateEnabled = [bool]($Request.Body.remediateEnabled -eq $true)
+                # Send an alert when this standard drifts on this tenant. On when omitted.
+                $AlertEnabled = [bool]($Request.Body.alertEnabled ?? $true)
                 $LegacyDeltas = @($ExistingDeltas | Where-Object { $_.RowKey -ne $DeltaRowKey })
                 if ($LegacyDeltas.Count -gt 0) { Remove-CIPPAzDataTableEntity -Force @DeltaTable -Entity $LegacyDeltas }
                 $DeltaTable.Force = $true
@@ -67,8 +75,8 @@ function Invoke-ExecBaselineOverride {
                     scopeId          = "$TenantId"
                     stage            = 1
                     expectedValue    = (ConvertTo-Json -Compress -Depth 100 -InputObject $Variables)
-                    remediateEnabled = $true
-                    alertEnabled     = $true
+                    remediateEnabled = $RemediateEnabled
+                    alertEnabled     = $AlertEnabled
                     alertOnRemediate = $false
                     rolloutId        = ''
                     reason           = $Reason
@@ -82,7 +90,6 @@ function Invoke-ExecBaselineOverride {
                 # the serialized template ("%var%" as an exact JSON value keeps its type),
                 # then Get-CIPPTextReplacement resolves tenant tokens - one %var% syntax.
                 if ($ResolvedEntity) {
-                    $Definition = Get-CIPPBaselineDefinition -Name (($Standard -split '#')[0])
                     $Expected = if ($Definition.expected) {
                         $ExpectedJson = ConvertTo-Json -Compress -Depth 100 -InputObject $Definition.expected
                         foreach ($Variable in $Variables.PSObject.Properties) {
@@ -93,9 +100,9 @@ function Invoke-ExecBaselineOverride {
                         }
                         $ExpectedJson = Get-CIPPTextReplacement -TenantFilter $TenantFilter -Text $ExpectedJson -EscapeForJson
                         $ExpectedJson | ConvertFrom-Json
-                    } elseif ($ResolvedEntity.ExpectedValue) {
-                        $ResolvedEntity.ExpectedValue | ConvertFrom-Json
                     } else { $null }
+                    # Without an expected template only a compare can work out the expected value, so the tier shows the configured settings.
+                    $TierValue = if ($Definition.expected) { $Expected } else { $Variables }
                     $Inheritance = @()
                     if ($ResolvedEntity.Inheritance) {
                         $Inheritance = @(($ResolvedEntity.Inheritance | ConvertFrom-Json) | Where-Object { $_ -and $_.templateName -ne 'Tenant Override' } | ForEach-Object {
@@ -105,13 +112,17 @@ function Invoke-ExecBaselineOverride {
                     $Inheritance += [PSCustomObject]@{
                         templateName = 'Tenant Override'
                         assignedTo   = $TenantFilter
-                        value        = $Expected
+                        value        = $TierValue
                         effective    = $true
                     }
                     & $Set 'ExpectedValue' (ConvertTo-Json -Compress -Depth 100 -InputObject $Expected)
                     & $Set 'SourceScope' 'tenant'
                     & $Set 'SourceTemplate' 'Tenant Override'
                     & $Set 'Inheritance' (ConvertTo-Json -Compress -Depth 100 -InputObject $Inheritance)
+                    # The stored result graded the previous configuration.
+                    if ($ResolvedEntity.Status -in $GradedStatuses) { & $Set 'Status' 'No Data' }
+                    & $Set 'Compliant' $false
+                    & $Set 'Diff' '[]'
                     $ResolvedTable.Force = $true
                     Add-CIPPAzDataTableEntity @ResolvedTable -Entity $ResolvedEntity
                 }
@@ -136,10 +147,14 @@ function Invoke-ExecBaselineOverride {
                     if ($Inheritance.Count -gt 0) {
                         foreach ($Tier in $Inheritance) { $Tier.effective = $false }
                         $Inheritance[-1].effective = $true
-                        & $Set 'ExpectedValue' (ConvertTo-Json -Compress -Depth 100 -InputObject $Inheritance[-1].value)
+                        # Without an expected template the tier holds the configured settings, not the expected value.
+                        & $Set 'ExpectedValue' (ConvertTo-Json -Compress -Depth 100 -InputObject $(if ($Definition.expected) { $Inheritance[-1].value } else { $null }))
                         & $Set 'SourceScope' $(if ($Inheritance.Count -gt 1) { 'group' } else { 'allTenants' })
                         & $Set 'SourceTemplate' "$($Inheritance[-1].templateName)"
                         & $Set 'Inheritance' (ConvertTo-Json -Compress -Depth 100 -InputObject $Inheritance)
+                        if ($ResolvedEntity.Status -in $GradedStatuses) { & $Set 'Status' 'No Data' }
+                        & $Set 'Compliant' $false
+                        & $Set 'Diff' '[]'
                         $ResolvedTable.Force = $true
                         Add-CIPPAzDataTableEntity @ResolvedTable -Entity $ResolvedEntity
                     }

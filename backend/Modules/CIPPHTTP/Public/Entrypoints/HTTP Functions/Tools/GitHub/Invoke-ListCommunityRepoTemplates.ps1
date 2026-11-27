@@ -40,10 +40,15 @@ function Invoke-ListCommunityRepoTemplates {
     $Table = Get-CIPPTable -TableName CommunityRepos
     $Repos = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'CommunityRepos'"
 
+    $CommunityRepos = Join-Path $env:CIPPRootPath 'Config\CommunityRepos.json'
+    $DefaultRepos = [System.IO.File]::ReadAllText($CommunityRepos) | ConvertFrom-Json
+    # Rows seeded by older versions carry no TemplateTypes until ListCommunityRepos syncs them
+    $BuiltInTypes = @{}
+    foreach ($Default in $DefaultRepos) { $BuiltInTypes[$Default.FullName] = @($Default.TemplateTypes) }
+
     if (!$Repos) {
         # First call on a fresh instance before ListCommunityRepos has seeded the table
-        $CommunityRepos = Join-Path $env:CIPPRootPath 'Config\CommunityRepos.json'
-        $Repos = [System.IO.File]::ReadAllText($CommunityRepos) | ConvertFrom-Json | ForEach-Object {
+        $Repos = $DefaultRepos | ForEach-Object {
             [PSCustomObject]@{
                 Name          = $_.Name
                 FullName      = $_.FullName
@@ -72,6 +77,7 @@ function Invoke-ListCommunityRepoTemplates {
             [PSCustomObject]@{
                 Source        = $Row.Source
                 SHA           = $Row.SHA
+                SourcePath    = $Row.SourcePath
                 SanitizedName = if ($Name) { ($Name -replace '\s', '_' -replace '[^\w\d_]', '') } else { $null }
             }
         })
@@ -126,19 +132,22 @@ function Invoke-ListCommunityRepoTemplates {
                 # Commit info is decorative; the catalog works without it
             }
 
-            $RepoTypes = @(($Repo.TemplateTypes | ConvertFrom-Json -ErrorAction SilentlyContinue) ?? @())
+            $RepoTypes = $BuiltInTypes[$Repo.FullName] ?? @(($Repo.TemplateTypes | ConvertFrom-Json -ErrorAction SilentlyContinue) ?? @())
             $BySha = @{}
             $ByName = @{}
+            # The repo path survives a rename in CIPP, the name does not
+            $ByPath = @{}
             foreach ($Imported in $ImportedTemplates) {
                 if ($Imported.Source -ne $Repo.FullName) { continue }
                 if ($Imported.SHA) { $BySha[$Imported.SHA] = $true }
                 if ($Imported.SanitizedName) { $ByName[$Imported.SanitizedName] = $true }
+                if ($Imported.SourcePath) { $ByPath[$Imported.SourcePath] = $true }
             }
 
             foreach ($File in $Tree.tree) {
                 if ($File.path -notmatch '\.json$' -or $File.path -match 'NativeImport') { continue }
                 $FileName = (($File.path -split '/')[-1]) -replace '\.json$', ''
-                if ($FileName -eq 'MigrationTable' -or $FileName -match 'ALLOWED COUNTRIES') { continue }
+                if ($FileName -eq 'MigrationTable' -or $FileName -match 'ALLOWED COUNTRIES' -or $File.path -match '(^|/)NamedLocations/') { continue }
 
                 $Segments = $File.path -split '/'
                 $Folders = @($Segments | Select-Object -SkipLast 1)
@@ -169,7 +178,7 @@ function Invoke-ListCommunityRepoTemplates {
                 $UpdateAvailable = $false
                 if ($BySha.ContainsKey($File.sha)) {
                     $Imported = $true
-                } elseif ($ByName.ContainsKey($SanitizedFileName)) {
+                } elseif ($ByPath.ContainsKey($File.path) -or $ByName.ContainsKey($SanitizedFileName)) {
                     $Imported = $true
                     $UpdateAvailable = $true
                 }

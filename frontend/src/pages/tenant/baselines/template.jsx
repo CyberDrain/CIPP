@@ -43,6 +43,7 @@ import { switchVariableProblem } from '../../../components/CippBaselines/CippBas
 import { useCustomVariableOptions } from '../../../hooks/use-custom-variables'
 import { PermissionButton } from '../../../utils/permissions'
 import { ApiGetCall, ApiPostCall } from '../../../api/ApiCall'
+import { getCippError } from '../../../utils/get-cipp-error'
 import { parseCippDate } from '../../../utils/parse-cipp-date'
 import { CippApiResults } from '../../../components/CippComponents/CippApiResults'
 
@@ -102,6 +103,48 @@ const toOptionArray = (value) => {
     (entry) => entry && typeof entry === 'object' && entry.value
   )
   return entries.length > 0 ? entries : null
+}
+
+const unwrapValue = (value) =>
+  value && typeof value === 'object' && 'value' in value ? value.value : value
+
+// Multi-select option arrays keep {label, value} so re-editing shows names without
+// an option lookup, but shed everything else (addedFields, rawData) - persisting a
+// full template object into the baseline bloats storage and the expected-value views.
+const cleanVariableValue = (value) =>
+  Array.isArray(value)
+    ? value.map((item) =>
+        item && typeof item === 'object' && 'value' in item
+          ? { label: item.label ?? String(item.value), value: item.value }
+          : item
+      )
+    : unwrapValue(value)
+
+// One standard's saved configuration, built from its live form values. Used by the save and
+// by moving a standard between stages, so a moved standard seeds exactly what a save stores.
+const toStandardConfig = (instanceKey, formValues, standardConfigs) => {
+  const config = formValues ?? {}
+  // A standard the operator never expanded never mounts its settings fields,
+  // so its variables never enter the form - serialize the SAVED variables for
+  // those, or saving a large baseline would silently wipe their configuration.
+  // Unwrapped either way: legacy saves stored option objects ({label, value})
+  // for some variables, and passing them through verbatim keeps that debt alive.
+  const savedVariables = standardConfigs?.[instanceKey]?.variables ?? {}
+  return {
+    standard: instanceKey.split('#')[0],
+    instance: instanceKey,
+    variables: Object.fromEntries(
+      Object.entries(config.variables ?? savedVariables).map(([key, value]) => [
+        key,
+        cleanVariableValue(value),
+      ])
+    ),
+    // Report-only unless the operator explicitly enabled remediation - a
+    // missing value must never fail open into auto-fixing tenants.
+    remediateEnabled: config.remediateEnabled ?? false,
+    alertEnabled: config.alertEnabled ?? true,
+    alertOnRemediate: config.alertOnRemediate ?? false,
+  }
 }
 
 // Stable identity for a stage while it is being edited. Panels (and their forms) are
@@ -164,6 +207,9 @@ const StagePanel = ({
   onOpenDialog,
   onRemoveStandard,
   onAddStandardInstance,
+  onMoveStandard,
+  moveTargets,
+  otherBaseline,
   canRemoveStage,
   canMoveUp,
   canMoveDown,
@@ -194,6 +240,7 @@ const StagePanel = ({
     name: 'conditions',
   })
   const [expandedStandard, setExpandedStandard] = useState(null)
+  const [stageMoveAnchor, setStageMoveAnchor] = useState(null)
   const [conditionGroups, setConditionGroups] = useState(
     stage.conditionGroups
   )
@@ -250,6 +297,17 @@ const StagePanel = ({
   const handleRemoveStandard = (standardName) => {
     formControl.unregister(standardName)
     onRemoveStandard(stageIndex, standardName)
+  }
+
+  // The live (possibly unsaved) values travel with the standard; the target stage seeds from them.
+  const handleMoveStandard = (instanceKey, targetIndex) => {
+    const config = toStandardConfig(
+      instanceKey,
+      formControl.getValues(instanceKey),
+      stage.standardConfigs
+    )
+    formControl.unregister(instanceKey)
+    onMoveStandard(stageIndex, targetIndex, instanceKey, config)
   }
 
   // Quick add for multi-instance standards: the new instance opens immediately so the
@@ -327,21 +385,6 @@ const StagePanel = ({
 
   // Registered every render so the save handler always serializes the latest form values.
   useEffect(() => {
-    const unwrapValue = (value) =>
-      value && typeof value === 'object' && 'value' in value
-        ? value.value
-        : value
-    // Multi-select option arrays keep {label, value} so re-editing shows names without
-    // an option lookup, but shed everything else (addedFields, rawData) - persisting a
-    // full template object into the baseline bloats storage and the expected-value views.
-    const cleanVariableValue = (value) =>
-      Array.isArray(value)
-        ? value.map((item) =>
-            item && typeof item === 'object' && 'value' in item
-              ? { label: item.label ?? String(item.value), value: item.value }
-              : item
-          )
-        : unwrapValue(value)
     registerSerializer(stage.key, () => {
       const values = formControl.getValues()
       const [primaryGroup, ...extraGroups] = conditionGroups.map((group) => ({
@@ -366,30 +409,9 @@ const StagePanel = ({
         logic: primaryGroup.logic,
         conditions: primaryGroup.conditions,
         conditionGroups: extraGroups,
-        standards: stage.standards.map((instanceKey) => {
-          const config = values[instanceKey] ?? {}
-          // A standard the operator never expanded never mounts its settings fields,
-          // so its variables never enter the form - serialize the SAVED variables for
-          // those, or saving a large baseline would silently wipe their configuration.
-          // Unwrapped either way: legacy saves stored option objects ({label, value})
-          // for some variables, and passing them through verbatim keeps that debt alive.
-          const savedVariables =
-            stage.standardConfigs?.[instanceKey]?.variables ?? {}
-          return {
-            standard: instanceKey.split('#')[0],
-            instance: instanceKey,
-            variables: Object.fromEntries(
-              Object.entries(config.variables ?? savedVariables).map(
-                ([key, value]) => [key, cleanVariableValue(value)]
-              )
-            ),
-            // Report-only unless the operator explicitly enabled remediation - a
-            // missing value must never fail open into auto-fixing tenants.
-            remediateEnabled: config.remediateEnabled ?? false,
-            alertEnabled: config.alertEnabled ?? true,
-            alertOnRemediate: config.alertOnRemediate ?? false,
-          }
-        }),
+        standards: stage.standards.map((instanceKey) =>
+          toStandardConfig(instanceKey, values[instanceKey], stage.standardConfigs)
+        ),
       }
     })
     return () => registerSerializer(stage.key, null)
@@ -427,6 +449,41 @@ const StagePanel = ({
             </Tooltip>
           )}
           <Box sx={{ flexGrow: 1 }} />
+          {otherBaseline && (
+            <>
+              <Tooltip title={otherBaseline.blockedReason ?? 'Move or copy this stage to another baseline'}>
+                <span>
+                  <IconButton
+                    aria-label="Move or copy this stage to another baseline"
+                    disabled={Boolean(otherBaseline.blockedReason)}
+                    onClick={(event) => setStageMoveAnchor(event.currentTarget)}
+                  >
+                    <CippIcons.SwapHoriz />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Menu
+                anchorEl={stageMoveAnchor}
+                open={Boolean(stageMoveAnchor)}
+                onClose={() => setStageMoveAnchor(null)}
+              >
+                {[
+                  { mode: 'move', label: 'Move stage to another baseline...' },
+                  { mode: 'copy', label: 'Copy stage to another baseline...' },
+                ].map(({ mode, label }) => (
+                  <MenuItem
+                    key={mode}
+                    onClick={() => {
+                      setStageMoveAnchor(null)
+                      otherBaseline.onOpen({ mode, stageIndex })
+                    }}
+                  >
+                    {label}
+                  </MenuItem>
+                ))}
+              </Menu>
+            </>
+          )}
           {stageIndex > 0 && (
             <>
               <Tooltip title="Move this stage up">
@@ -825,6 +882,15 @@ const StagePanel = ({
                 }
                 onRemove={handleRemoveStandard}
                 onAddInstance={handleAddStandardInstance}
+                moveTargets={moveTargets(instanceKey)}
+                onMove={handleMoveStandard}
+                otherBaseline={
+                  otherBaseline && {
+                    blockedReason: otherBaseline.blockedReason,
+                    onOpen: (standard, mode) =>
+                      otherBaseline.onOpen({ mode, stageIndex, standard }),
+                  }
+                }
               />
             </Box>
           ))}
@@ -832,6 +898,109 @@ const StagePanel = ({
       </Stack>
     </Box>
   );
+}
+
+// Moves or copies one standard, or a whole stage, into another saved baseline. The server reads and
+// writes both saved baselines, which is why the editor only offers it with no unsaved changes.
+const NEW_STAGE_AT_END = { label: 'New stage at the end', value: 'new:end' }
+
+const MoveToBaselineDialog = ({ createDialog, request, source, baselines, onMoved }) => {
+  const formHook = useForm({ mode: 'onChange' })
+  const targetId = useWatch({ control: formHook.control, name: 'targetBaseline' })?.value
+  const placement = useWatch({ control: formHook.control, name: 'placement' })?.value
+  const isStage = !request?.standard
+  useEffect(() => {
+    // A whole stage always becomes a new stage, so it starts at the end.
+    formHook.setValue('placement', isStage ? NEW_STAGE_AT_END : null)
+  }, [targetId, isStage, formHook])
+  const target = baselines.find((baseline) => baseline.GUID === targetId)
+  const mode = request?.mode ?? 'move'
+  const stageIndex = request?.stageIndex ?? 0
+  const targetStages = target?.stages ?? []
+  const sourceStage = source?.stages?.[stageIndex]
+  // A single standard's new stage, or a copy of a stage without conditions (such as Stage 1), starts with none.
+  const newStageHasConditions =
+    isStage &&
+    [...(sourceStage?.conditions ?? []), ...(sourceStage?.conditionGroups ?? []).flatMap((group) => group.conditions ?? [])]
+      .length > 0
+  const placementOptions = [
+    ...(isStage
+      ? []
+      : targetStages.map((stage, index) => ({
+          label: `Stage ${index + 1}: ${stage.name}`,
+          value: `existing:${index}`,
+        }))),
+    NEW_STAGE_AT_END,
+    // A stage with no conditions mid-baseline would stop every tenant from moving past it, so it only goes at the end.
+    ...(newStageHasConditions ? targetStages : []).map((stage, index) => ({
+      label: `New stage after Stage ${index + 1}: ${stage.name}`,
+      value: `new:${index}`,
+    })),
+  ]
+  const [kind] = (placement ?? '').split(':')
+  const targetName = target?.templateName ?? 'the baseline you pick'
+  const impact = [
+    `Tenants assigned to ${targetName} will get these settings.`,
+    mode === 'move' ? `Tenants assigned to ${source?.templateName} stop getting them on the next run.` : null,
+    kind === 'new' && !newStageHasConditions
+      ? `The new stage has no graduation conditions yet, so no tenant moves into it until you add one. ${targetName} cannot be saved again in the editor until the stage has a condition.`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' ')
+  if (!request) return null
+  return (
+    <CippApiDialog
+      createDialog={createDialog}
+      title={`${mode === 'move' ? 'Move' : 'Copy'} ${request.label ?? ''} to another baseline`}
+      formHook={formHook}
+      row={{}}
+      relatedQueryKeys={['ListBaseline*']}
+      api={{
+        url: '/api/ExecMoveBaselineStandards',
+        type: 'POST',
+        confirmText: impact,
+        customDataformatter: (row, action, formData) => {
+          const [chosenKind, chosenPosition] = (formData.placement?.value ?? 'new:end').split(':')
+          return {
+            sourceId: source?.GUID,
+            targetId: formData.targetBaseline?.value,
+            mode,
+            ...(isStage
+              ? { stage: stageIndex }
+              : { standard: request.standard, sourceStage: stageIndex }),
+            ...(chosenKind === 'existing'
+              ? { targetStage: Number(chosenPosition) }
+              : { newStage: chosenPosition === 'end' ? 'end' : Number(chosenPosition) }),
+          }
+        },
+        onSuccess: () => mode === 'move' && onMoved(),
+      }}
+      fields={[
+        {
+          type: 'autoComplete',
+          name: 'targetBaseline',
+          label: 'Baseline',
+          options: baselines
+            .filter((baseline) => baseline.GUID !== source?.GUID)
+            .map((baseline) => ({ label: baseline.templateName, value: baseline.GUID })),
+          multiple: false,
+          creatable: false,
+          validators: { required: 'Pick a baseline' },
+        },
+        {
+          type: 'autoComplete',
+          name: 'placement',
+          label: isStage ? 'Place the new stage' : 'Stage',
+          options: placementOptions,
+          multiple: false,
+          creatable: false,
+          disabled: !target,
+          validators: { required: 'Pick where it goes' },
+        },
+      ]}
+    />
+  )
 }
 
 const Page = () => {
@@ -852,6 +1021,8 @@ const Page = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [addStageAnchor, setAddStageAnchor] = useState(null)
   const stageSerializers = useRef({})
+  // Set by a reload after a move, so the editor stays on the stage it was showing.
+  const [keepActiveStage, setKeepActiveStage] = useState(false)
 
   const definitionsApi = ApiGetCall({
     url: '/api/ListBaselineStandards',
@@ -861,6 +1032,25 @@ const Page = () => {
     url: '/api/ListBaselines',
     queryKey: 'ListBaselines',
   })
+  // The baseline CyberDrain delivered for a custom managed baseline request loads like a
+  // clone: its content, with no save target, so the first save creates it.
+  const managedRequestId = router.query.managedRequest
+  const deliveredApi = ApiGetCall({
+    url: '/api/ListManagedBaselineRequests',
+    data: { requestId: managedRequestId, includeBaseline: true },
+    queryKey: `ManagedBaselineDelivery-${managedRequestId}`,
+    waiting: !!managedRequestId,
+  })
+  // The baseline Generate prepared from a tenant's recommendations loads the same way.
+  const recommendationTenant = router.query.recommendation
+  const recommendationApi = ApiGetCall({
+    url: '/api/ListManagedBaselineRecommendations',
+    data: { tenantFilter: recommendationTenant, draft: true },
+    queryKey: `ManagedBaselineRecommendationDraft-${recommendationTenant}`,
+    waiting: !!recommendationTenant,
+  })
+  const draftKey = managedRequestId ?? recommendationTenant
+  const draftApi = managedRequestId ? deliveredApi : recommendationApi
   // Saving a baseline invalidates every baseline-related query: the baselines list (direct
   // and table), all alignment views for every tenant, and the standards catalog.
   // The save runs inside a confirm dialog so its result (including the GitHub push
@@ -885,7 +1075,11 @@ const Page = () => {
     setHasUnsavedChanges(false)
     // Re-baseline the form so isDirty clears after the save.
     formControl.reset(formControl.getValues())
-    if (router.query.id !== savedId || router.query.clone) {
+    if (
+      router.query.id !== savedId ||
+      router.query.clone ||
+      router.query.recommendation
+    ) {
       router.replace(
         { pathname: router.pathname, query: { id: savedId } },
         undefined,
@@ -921,9 +1115,15 @@ const Page = () => {
   const catalogByName = Object.fromEntries(
     catalog.map((standard) => [standard.name, standard])
   )
-  const template = (baselinesApi.data ?? []).find(
-    (entry) => entry.GUID === router.query.id
-  )
+  // Once the delivery is saved the editor follows the saved baseline, even before the
+  // address has caught up with its id.
+  const template =
+    draftKey && !saveTargetId
+      ? draftApi.data?.Results
+      : (baselinesApi.data ?? []).find(
+          (entry) => entry.GUID === (draftKey ? saveTargetId : router.query.id)
+        )
+  const isDelivery = !!template && template === draftApi.data?.Results
   // A clone isn't pushed to the source repo yet, so it drops the synced badge/option.
   const templateSource = !router.query.clone && template?.source ? template.source : null
   const templateSourceUrl = !router.query.clone ? template?.sourceUrl : null
@@ -955,10 +1155,11 @@ const Page = () => {
   // Render-phase reset (not an effect) so the switch happens before anything paints.
   if (template && template.GUID !== loadedTemplateId) {
     setLoadedTemplateId(template.GUID)
-    setSaveTargetId(router.query.clone ? null : template.GUID)
+    setSaveTargetId(router.query.clone || isDelivery ? null : template.GUID)
     setEditorGeneration((generation) => generation + 1)
     setStages(buildEditorStages(template))
-    setActiveStage(0)
+    setActiveStage(keepActiveStage ? Math.min(activeStage, Math.max((template.stages?.length ?? 1) - 1, 0)) : 0)
+    setKeepActiveStage(false)
     setHasUnsavedChanges(false)
     formControl.reset({
       templateName: router.query.clone
@@ -988,6 +1189,35 @@ const Page = () => {
 
   // Structural changes set the flag explicitly; field edits are tracked by the form itself.
   const unsavedChanges = hasUnsavedChanges || formControl.formState.isDirty
+
+  // Moving to another baseline works on the saved copies, so it needs a saved baseline with no pending edits.
+  const moveDialog = useDialog()
+  const [moveRequest, setMoveRequest] = useState(null)
+  const savedBaseline = saveTargetId
+    ? (baselinesApi.data ?? []).find((entry) => entry.GUID === saveTargetId)
+    : null
+  const otherBaseline =
+    savedBaseline && (baselinesApi.data ?? []).some((entry) => entry.GUID !== saveTargetId)
+      ? {
+          blockedReason: unsavedChanges ? 'Save this baseline first' : null,
+          onOpen: (request) => {
+            setMoveRequest({
+              ...request,
+              label: request.standard
+                ? (catalogByName[request.standard.split('#')[0]]?.label ?? request.standard)
+                : `Stage ${request.stageIndex + 1} (${stages[request.stageIndex]?.name})`,
+            })
+            moveDialog.handleOpen()
+          },
+        }
+      : null
+  // After a move the source changed on the server: reload it into the editor, the same way a different
+  // baseline is loaded, so no stale stage or form state survives.
+  const reloadSavedBaseline = () =>
+    Promise.resolve(baselinesApi.refetch()).then(() => {
+      setKeepActiveStage(true)
+      setLoadedTemplateId(null)
+    })
 
   // Warn before navigating away with unsaved changes (browser close + in-app navigation).
   const handleRouteChange = useCallback(
@@ -1109,6 +1339,49 @@ const Page = () => {
           : stage
       )
     )
+
+  const handleMoveStandard = (fromIndex, toIndex, instanceKey, config) =>
+    mutateStages((prev) =>
+      prev.map((stage, index) => {
+        if (index === fromIndex) {
+          return {
+            ...stage,
+            standards: stage.standards.filter((name) => name !== instanceKey),
+          }
+        }
+        if (index === toIndex) {
+          return {
+            ...stage,
+            standards: [...stage.standards, instanceKey],
+            standardConfigs: { ...stage.standardConfigs, [instanceKey]: config },
+          }
+        }
+        return stage
+      })
+    )
+
+  // Other stages a standard can move to. A stage already holding the same single-instance
+  // standard is disabled so a move never overwrites its configuration.
+  const moveTargetsFor = (stageIndex) => (instanceKey) => {
+    if (stages.length < 2) return []
+    const baseName = instanceKey.split('#')[0]
+    const isMultiple = catalogByName[baseName]?.multiple === true
+    return stages.flatMap((stage, index) =>
+      index === stageIndex
+        ? []
+        : [
+            {
+              index,
+              label: `Stage ${index + 1}: ${stage.name}`,
+              disabled: stage.standards.some(
+                (key) =>
+                  key === instanceKey ||
+                  (!isMultiple && key.split('#')[0] === baseName)
+              ),
+            },
+          ]
+    )
+  }
 
   // Quick add from a staged row: appends one more instance of a multi-instance standard
   // to the given stage and returns its key so the panel can expand it straight away.
@@ -1252,6 +1525,13 @@ const Page = () => {
         ...(dialogValues.saveToGitHub && templateSource
           ? { GitHub: { FullName: templateSource, Message: dialogValues.GitHubMessage } }
           : {}),
+        // The first save of a delivery says which request it came from and which version was reviewed.
+        ...(isDelivery
+          ? {
+              managedRequestId: template.managedRequestId,
+              managedVersion: template.managedVersion,
+            }
+          : {}),
     }
   }
   // Save reads the stage forms without validating them, and collapsed standards never mount their
@@ -1280,12 +1560,21 @@ const Page = () => {
     if (problems.length === 0) saveDialog.handleOpen()
   }
 
-  const pageTitle = template ? 'Edit Baseline' : 'Add Baseline'
+  const pageTitle = isDelivery
+    ? managedRequestId
+      ? 'Review Managed Baseline'
+      : 'Review Recommended Baseline'
+    : template
+      ? 'Edit Baseline'
+      : 'Add Baseline'
 
   return (
     <Box sx={{ flexGrow: 1, px: 3, maxWidth: '1900px' }}>
       <CippHead title={pageTitle} />
       <Stack spacing={2}>
+        {draftKey && draftApi.isError && (
+          <Alert severity="error">{getCippError(draftApi.error)}</Alert>
+        )}
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
           spacing={{ xs: 2, sm: 4 }}
@@ -1601,6 +1890,9 @@ const Page = () => {
                     onOpenDialog={handleOpenDialog}
                     onRemoveStandard={handleRemoveStandard}
                     onAddStandardInstance={handleAddStandardInstance}
+                    onMoveStandard={handleMoveStandard}
+                    moveTargets={moveTargetsFor(index)}
+                    otherBaseline={otherBaseline}
                     canRemoveStage={index > 0}
                     canMoveUp={index > 1}
                     canMoveDown={index > 0 && index < stages.length - 1}
@@ -1643,6 +1935,13 @@ const Page = () => {
         })}
         row={{}}
         relatedQueryKeys={['ListBaseline*']}
+      />
+      <MoveToBaselineDialog
+        createDialog={moveDialog}
+        request={moveRequest}
+        source={savedBaseline}
+        baselines={baselinesApi.data ?? []}
+        onMoved={reloadSavedBaseline}
       />
     </Box>
   );

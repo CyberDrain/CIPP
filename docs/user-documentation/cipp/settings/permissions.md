@@ -19,6 +19,8 @@ While an imported report is being viewed, each affected check is marked with an 
 
 Checks the account and application CIPP signs in with, and the permissions granted to that application. Select **Refresh** to run the check again without using cached results, or **Details** to open the Permission Details flyout with the full breakdown. The time of the last run is shown beside the buttons.
 
+The top of the card shows the account CIPP signed in as, its IP address, and, next to **App Registration**, a link that opens the CIPP-SAM application in the Azure portal. The link is still shown when the check cannot connect.
+
 The card lists each result with a tick, a warning, or a cross. When everything passes, the card ends with "No service account issues have been found. CIPP is ready for use."
 
 | Result                         | What a failure means and how to fix it                                                                                                                                                                                                                                                                         |
@@ -26,6 +28,8 @@ The card lists each result with a tick, a warning, or a cross. When everything p
 | Service account                | CIPP does not appear to be signed in as a dedicated service account. Use a dedicated account for CIPP and refresh your tokens in the [SAM Setup Wizard](../sam-setup-wizard.md). The Details flyout links to the guide for creating one.                                                                        |
 | MFA claim                      | The sign-in CIPP is using did not complete multi-factor authentication. Refresh your tokens in the [SAM Setup Wizard](../sam-setup-wizard.md), completing MFA as the service account.                                                                                                                          |
 | Device code login              | The token CIPP holds was first obtained through a device code sign-in, which Conditional Access blocks in some customer tenants. Refresh your token in the [SAM Setup Wizard](../sam-setup-wizard.md). Where CIPP cannot read your sign-in logs to check this, the card says so instead of reporting a failure. |
+| Permissions to manage itself   | CIPP's sign-in does not carry the permissions it needs to grant itself everything else, so most other checks fail too. See [CIPP cannot manage its own permissions](#cipp-cannot-manage-its-own-permissions).                                                                                           |
+| Service account role           | The account CIPP signs in as is not a Global Administrator or Privileged Role Administrator, so CIPP cannot grant its own permissions. See [Permissions not granted in your tenant](#permissions-not-granted-in-your-tenant).                                                                                     |
 | Refresh token                  | The token CIPP is currently using does not match the one that is stored. This happens shortly after a token refresh and resolves itself within thirty minutes.                                                                                                                                                 |
 | Application secret             | The secret CIPP authenticates with as its own application has expired, or is close to expiry. See [Application secret](#application-secret).                                                                                                                                                                   |
 | New permissions to apply       | A CIPP update needs permissions that have not been applied yet. Fixed from the page with **Repair Permissions**. See [New permissions to apply](#new-permissions-to-apply).                                                                                                                                      |
@@ -36,7 +40,7 @@ If the check cannot connect at all, the card reports the error returned and, whe
 
 ### Permission Details
 
-The Details flyout shows the account CIPP signed in as, its IP address, and a link to the CIPP-SAM application in the Azure portal. Below that, it shows only the sections that apply to the current results:
+The Details flyout shows only the sections that apply to the current results:
 
 | Section                                | Description                                                                                       |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------- |
@@ -75,10 +79,20 @@ CIPP grants these permissions itself during its nightly permission update, signe
 
 If you would rather not give the service account that role, a Global Administrator can grant the permissions manually:
 
-1. Select the CIPP-SAM link next to **App Registration** in the Details flyout. It opens the application in the Azure portal.
+1. On the Permissions check card, select the CIPP-SAM link next to **App Registration**. It opens the application in the Azure portal.
 2. Go to **API permissions**. Add any permission listed in the Details flyout that is not shown, choosing **Microsoft Graph** and then Application or Delegated permissions to match the Type column.
 3. Select **Grant admin consent** for your tenant and confirm each permission shows as granted.
 4. After a few minutes, select **Refresh** on the Permissions check. Newly granted permissions can take a short while to appear.
+
+### CIPP cannot manage its own permissions
+
+CIPP grants its own permissions, in your tenant and in your clients' tenants, signed in as the CIPP service account. To do that, its sign-in needs three Microsoft Graph delegated permissions: DelegatedPermissionGrant.ReadWrite.All, AppRoleAssignment.ReadWrite.All and Directory.ReadWrite.All. If those are missing, for example because the CIPP-SAM application's permissions were removed in Entra, CIPP cannot put them back by itself, and refreshing the token alone does not help. The card names the ones that are missing. To fix it:
+
+1. On the Permissions check card, select the CIPP-SAM link next to **App Registration**. It opens the application in the Azure portal.
+2. Go to **API permissions** and select **Add a permission**, then **Microsoft Graph** and **Delegated permissions**. Add each permission the card lists.
+3. Select **Grant admin consent** for your tenant, signed in as a Global Administrator.
+4. Refresh your token in the [SAM Setup Wizard](../sam-setup-wizard.md). For an additional partner tenant, reconnect it on the Partner Tenants page instead.
+5. Run **Refresh CPV Permissions** on the \*Partner Tenant row under CIPP > Application Settings > [Tenants](tenants.md) to restore the rest of CIPP's permissions in your tenant, then select **Refresh** on the Permissions check.
 
 ### Application secret
 
@@ -130,7 +144,7 @@ Tests access to each tenant in turn and reports what CIPP can reach. Select **Re
 | Service Account | For a direct tenant, the account CIPP authenticated as. Blank for GDAP tenants, which use the partner relationship rather than an account in the tenant.                                                 |
 | Last Run        | When the access check last ran for this tenant.                                                                                                                                                          |
 | Graph Status    | Whether CIPP could successfully reach Microsoft Graph in the tenant.                                                                                                                                     |
-| Exchange Status | Whether CIPP could successfully reach Exchange Online in the tenant. This also fails when Exchange's **Organization Management** role group is missing roles CIPP relies on.                                 |
+| Exchange Status | Whether CIPP could successfully reach Exchange Online in the tenant. This also fails when Exchange's **Organization Management** role group is missing roles CIPP relies on. If CIPP connects but Exchange won't list the roles, the status stays ticked and the flyout says the roles couldn't be verified.                                 |
 | Missing Roles   | Any roles CIPP does not currently hold in the tenant. Billing Administrator, Global Reader, and Domain Name Administrator are optional; the rest are required.                                            |
 | Assigned Roles  | The roles CIPP holds in the tenant. For a direct tenant these are the roles held by the service account; where that account is a Global Administrator, the roles it grants implicitly are noted as such. |
 

@@ -124,6 +124,7 @@ const CACHE_TYPE_COLLECTIONS = {
     "IntuneApplications",
     "IntuneAssignmentFilters",
     "ManagedDeviceEncryptionStates",
+    "ManagedDeviceProtectionStates",
     "IntuneAppProtectionPolicies",
     "IntuneScripts",
     "IntuneReusableSettings",
@@ -181,7 +182,7 @@ const CACHE_TYPE_COLLECTIONS = {
     "TeamsVoice",
     "TeamsResourceAccounts",
   ],
-  Defender: ["DefenderCVEs"],
+  Defender: ["DefenderMachines", "DefenderIndicators", "DefenderCVEs"],
   DefenderForOffice365: [
     "ExoSafeLinksPolicies",
     "ExoSafeAttachmentPolicies",

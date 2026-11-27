@@ -17,7 +17,7 @@ It is a useful place to spot cross-tenant trust that nobody remembers setting up
 Beyond those, each row is the Graph resource type `crossTenantAccessPolicyConfigurationPartner`, which also carries the inbound and outbound B2B settings, the inbound trust settings and the automatic consent settings for the relationship. For more information on the properties please see the [Graph documentation](https://learn.microsoft.com/en-us/graph/api/resources/crosstenantaccesspolicyconfigurationpartner?view=graph-rest-1.0#properties).
 
 {% hint style="warning" %}
-This table is view only. Cross-tenant access settings are changed in the Microsoft Entra admin center.
+This table is view only. To change cross-tenant access settings, use [Cross-Tenant Access](cross-tenant-access.md).
 {% endhint %}
 
 {% hint style="info" %}

@@ -59,3 +59,7 @@
 ### Checking a Security Simulations scenario and closing its gaps
 
 {% @storylane/embed subdomain="app" url="https://app.storylane.io/share/gn6rkf2efxh2" linkValue="gn6rkf2efxh2" %}
+
+### Using variables in Conditional Access templates
+
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/d2vn3jbbe0ny" linkValue="d2vn3jbbe0ny" %}

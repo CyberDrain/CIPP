@@ -5,7 +5,7 @@ Enterprise applications are the service principals present in the selected tenan
 The table is read live from Microsoft Graph each time the page loads, so it always reflects the tenant's current state.
 
 {% hint style="info" %}
-Microsoft first-party service principals make up the bulk of a typical tenant's list, so they are hidden when the page opens and the table shows the same applications as the Enterprise applications view in the Microsoft Entra admin center. Select the **Microsoft apps hidden** chip above the table to include them, and select it again to hide them.
+Microsoft first-party service principals make up the bulk of a typical tenant's list, so they are hidden when the page opens. Every other application is shown, including apps deployed by CIPP that the Microsoft Entra admin center's default Enterprise applications view leaves out. Select the **Microsoft apps hidden** chip above the table to include them, and select it again to hide them.
 {% endhint %}
 
 ## Page Actions

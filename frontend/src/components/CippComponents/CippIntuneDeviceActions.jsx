@@ -1,5 +1,6 @@
 
 import { CippIcons } from '../../utils/icon-registry'
+import { useSettings } from '../../hooks/use-settings'
 import { CippIntuneSyncDrawer } from './CippIntuneSyncDrawer'
 import { tenantScope } from '../../utils/tenant-selection'
 
@@ -21,7 +22,7 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
     link: `https://intune.microsoft.com/${tenantFilter}/#view/Microsoft_Intune_Devices/DeviceSettingsMenuBlade/~/overview/mdmDeviceId/[id]`,
     pinned: true,
     color: 'info',
-    icon: <CippIcons.EyeIcon />,
+    icon: <CippIcons.Launch />,
     target: '_blank',
     multiPost: false,
     external: true,
@@ -151,7 +152,15 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
   },
   {
     label: 'Sync Device',
+    // The row menu opens the sync status drawer; the bulk Actions menu posts this
+    type: 'POST',
     icon: <CippIcons.Sync />,
+    url: '/api/ExecDeviceAction',
+    data: {
+      GUID: 'id',
+      Action: 'syncDevice',
+    },
+    confirmText: 'Are you sure you want to sync [deviceName]?',
     multiPost: false,
     customComponent: (row, { drawerVisible, setDrawerVisible }) => (
       <CippIntuneSyncDrawer
@@ -210,7 +219,7 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
   {
     label: 'Rotate Local Admin Password',
     type: 'POST',
-    icon: <CippIcons.PasswordOutlined />,
+    icon: <CippIcons.LockReset />,
     url: '/api/ExecDeviceAction',
     data: {
       GUID: 'id',
@@ -283,7 +292,7 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
   {
     label: 'Retrieve FileVault Key',
     type: 'POST',
-    icon: <CippIcons.Security />,
+    icon: <CippIcons.VpnKey />,
     url: '/api/ExecGetRecoveryKey',
     data: {
       GUID: 'id',
@@ -295,7 +304,7 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
   {
     label: 'Reset Passcode',
     type: 'POST',
-    icon: <CippIcons.PasswordOutlined />,
+    icon: <CippIcons.PhonelinkLock />,
     url: '/api/ExecDevicePasscodeAction',
     data: {
       GUID: 'id',
@@ -308,7 +317,7 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
   {
     label: 'Remove Passcode',
     type: 'POST',
-    icon: <CippIcons.Password />,
+    icon: <CippIcons.LockOpen />,
     url: '/api/ExecDevicePasscodeAction',
     data: {
       GUID: 'id',
@@ -384,7 +393,7 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
   {
     label: 'Fresh Start',
     type: 'POST',
-    icon: <CippIcons.RestartAlt />,
+    icon: <CippIcons.CleaningServices />,
     url: '/api/ExecDeviceAction',
     data: {
       GUID: 'id',
@@ -408,7 +417,7 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
   {
     label: 'Wipe Device',
     type: 'POST',
-    icon: <CippIcons.RestartAlt />,
+    icon: <CippIcons.PhonelinkErase />,
     url: '/api/ExecDeviceAction',
     data: {
       GUID: 'id',
@@ -452,7 +461,7 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
   {
     label: 'Wipe Device',
     type: 'POST',
-    icon: <CippIcons.RestartAlt />,
+    icon: <CippIcons.PhonelinkErase />,
     url: '/api/ExecDeviceAction',
     data: {
       GUID: 'id',
@@ -487,7 +496,7 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
   {
     label: 'Delete Device',
     type: 'POST',
-    icon: <CippIcons.Recycling />,
+    icon: <CippIcons.Delete />,
     url: '/api/ExecDeviceAction',
     data: {
       GUID: 'id',
@@ -524,7 +533,7 @@ export const getBecIntuneDeviceActions = ({ tenantFilter } = {}) => [
     link: `https://intune.microsoft.com/${tenantFilter}/#view/Microsoft_Intune_Devices/DeviceSettingsMenuBlade/~/overview/mdmDeviceId/[id]`,
     pinned: true,
     color: 'info',
-    icon: <CippIcons.EyeIcon />,
+    icon: <CippIcons.Launch />,
     target: '_blank',
     multiPost: false,
     external: true,
@@ -543,7 +552,7 @@ export const getBecIntuneDeviceActions = ({ tenantFilter } = {}) => [
   {
     label: 'Wipe device (remove enrollment)',
     type: 'POST',
-    icon: <CippIcons.RestartAlt />,
+    icon: <CippIcons.PhonelinkErase />,
     url: '/api/ExecDeviceAction',
     data: {
       GUID: 'id',
@@ -555,3 +564,9 @@ export const getBecIntuneDeviceActions = ({ tenantFilter } = {}) => [
       'Are you sure you want to factory-wipe [deviceName]? This removes all data and Intune enrollment. This cannot be undone.',
   },
 ]
+
+export const actionSearch = {
+  page: '/endpoint/MEM/devices/device',
+  idParam: 'deviceId',
+  useActions: () => getIntuneDeviceActions({ tenantFilter: useSettings().currentTenant }),
+}

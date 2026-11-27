@@ -2,14 +2,18 @@ import React from 'react'
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { renderWithProviders } from '../test-utils'
+import { renderWithProviders, settingsWith } from '../test-utils'
 
 const tablePage = vi.hoisted(() => ({ props: null }))
+const dataTable = vi.hoisted(() => ({ props: null }))
 vi.mock('../../src/api/ApiCall', async () =>
   (await import('../mocks/api-call')).apiCallMock()
 )
 vi.mock('../../src/components/CippTable/CippDataTable', () => ({
-  CippDataTable: () => null,
+  CippDataTable: (props) => {
+    dataTable.props = props
+    return null
+  },
 }))
 vi.mock('../../src/components/CippComponents/CippTablePage.jsx', () => ({
   CippTablePage: (props) => {
@@ -17,7 +21,7 @@ vi.mock('../../src/components/CippComponents/CippTablePage.jsx', () => ({
     return <div>{props.tableFilter}</div>
   },
 }))
-import { api, getResult } from '../mocks/api-call'
+import { api, getResult, postResult } from '../mocks/api-call'
 import { ApiGetCall } from '../../src/api/ApiCall'
 import router from 'next/router'
 
@@ -150,5 +154,66 @@ describe('Baseline Alignment tab - by-standard filters', () => {
       })
     )
     expect(screen.queryByText(/scored once per tenant/)).not.toBeInTheDocument()
+  }, 30000)
+  it('runs every assigned baseline for the selected tenant from Tenant View', async () => {
+    const post = postResult()
+    api.post = post
+    const user = userEvent.setup()
+    renderWithProviders(<Page />)
+    await user.click(
+      screen.getByRole('button', { name: 'Run All Assigned Baselines' })
+    )
+    expect(
+      await screen.findByText(
+        /Run every baseline assigned to testdomain.com now/
+      )
+    ).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /confirm/i }))
+
+    const payload = post.mutate.mock.calls.at(-1)[0]
+    expect(payload.url).toBe('/api/ExecBaselineRun')
+    expect(payload.data).toEqual({
+      mode: 'run',
+      tenantFilter: 'testdomain.com',
+    })
+    api.post = postResult()
+  }, 30000)
+
+  it('hides Run All Assigned Baselines for All Tenants', async () => {
+    renderWithProviders(<Page />, {
+      settings: settingsWith({ currentTenant: 'AllTenants' }),
+    })
+    expect(
+      screen.queryByRole('button', { name: 'Run All Assigned Baselines' })
+    ).not.toBeInTheDocument()
+  }, 30000)
+
+  it('shows the standard description in the Standard Details drawer, and tolerates rows without a definition', async () => {
+    const definitions = getResult({
+      data: [{ name: 'standards.Known', helpText: 'Blocks legacy sign-in.' }],
+    })
+    const alignment = getResult({
+      data: {
+        rows: [
+          { standardName: 'standards.Known#1', standardLabel: 'Known' },
+          { standardName: 'standards.Unknown', standardLabel: 'Unknown' },
+        ],
+      },
+    })
+    api.get = (opts) =>
+      opts?.url === '/api/ListBaselineStandards'
+        ? definitions
+        : opts?.url === '/api/ListBaselineAlignment'
+          ? alignment
+          : defaultGet(opts)
+    renderWithProviders(<Page />)
+    const drawer = dataTable.props.offCanvas
+    const [known, unknown] = alignment.data.rows
+
+    renderWithProviders(<>{drawer.children(known)}</>)
+    expect(screen.getByText('Blocks legacy sign-in.')).toBeInTheDocument()
+
+    const { container } = renderWithProviders(<>{drawer.children(unknown)}</>)
+    expect(container.textContent).not.toContain('Blocks legacy sign-in.')
   }, 30000)
 })

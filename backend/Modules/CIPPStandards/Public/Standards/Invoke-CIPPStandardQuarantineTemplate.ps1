@@ -57,8 +57,10 @@ function Invoke-CIPPStandardQuarantineTemplate {
     $APIName = 'Standards'
 
     try {
-        # Get the current custom quarantine policies
-        $CurrentPolicies = New-ExoRequest -tenantid $Tenant -cmdlet 'Get-QuarantinePolicy' | Where-Object -Property Guid -NE '00000000-0000-0000-0000-000000000000' -ErrorAction Stop
+        # Built-in policies carry the all-zero Guid and Exchange refuses to create or edit them
+        $AllPolicies = @(New-ExoRequest -tenantid $Tenant -cmdlet 'Get-QuarantinePolicy')
+        $CurrentPolicies = $AllPolicies.Where({ "$($_.Guid)" -ne '00000000-0000-0000-0000-000000000000' })
+        $BuiltInPolicyNames = $AllPolicies.Where({ "$($_.Guid)" -eq '00000000-0000-0000-0000-000000000000' }).Name
 
         # Compare the settings from standard with the current policies
         $CompareList = foreach ($Policy in $Settings) {
@@ -68,6 +70,10 @@ function Invoke-CIPPStandardQuarantineTemplate {
                 $PolicyDisplayName = $Policy.displayName.value ?? [string]$Policy.displayName
                 if ([string]::IsNullOrWhiteSpace($PolicyDisplayName)) {
                     Write-LogMessage -API $APIName -tenant $Tenant -message 'Skipping a Quarantine policy entry with no display name.' -sev 'Warning'
+                    continue
+                }
+                if ($PolicyDisplayName -in $BuiltInPolicyNames) {
+                    Write-LogMessage -API $APIName -tenant $Tenant -message "Skipping Quarantine policy $PolicyDisplayName`: it is a built-in Microsoft policy that cannot be created or edited. Give the policy in the standard a custom name." -sev 'Warning'
                     continue
                 }
 
@@ -188,11 +194,11 @@ function Invoke-CIPPStandardQuarantineTemplate {
                     if ($Policy.missing) {
                         $CurrentInfo = $Policy | Select-Object -Property displayName, missing
                         Write-StandardsAlert -message "Quarantine policy $($Policy.displayName) is missing." -object $CurrentInfo -tenant $Tenant -standardName 'QuarantineTemplate' -standardId $Settings.templateId
-                        Write-LogMessage -API $APIName -tenant $Tenant -message "Quarantine policy $($Policy.displayName) is missing." -sev info
+                        Write-LogMessage -API $APIName -tenant $Tenant -message "Quarantine policy $($Policy.displayName) is missing." -sev Info
                     } else {
                         $CurrentInfo = $CurrentPolicies | Where-Object -Property Name -EQ $Policy.displayName | Select-Object -Property Name, ESNEnabled, IncludeMessagesFromBlockedSenderAddress, EndUserQuarantinePermissions
                         Write-StandardsAlert -message "Quarantine policy $($Policy.displayName) does not match the expected configuration." -object $CurrentInfo -tenant $Tenant -standardName 'QuarantineTemplate' -standardId $Settings.templateId
-                        Write-LogMessage -API $APIName -tenant $Tenant -message "Quarantine policy $($Policy.displayName) does not match the expected configuration. We've generated an alert" -sev info
+                        Write-LogMessage -API $APIName -tenant $Tenant -message "Quarantine policy $($Policy.displayName) does not match the expected configuration. We've generated an alert" -sev Info
                     }
                 }
             }

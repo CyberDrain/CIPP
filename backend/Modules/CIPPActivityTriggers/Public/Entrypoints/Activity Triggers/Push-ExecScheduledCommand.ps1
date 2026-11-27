@@ -417,8 +417,8 @@ function Push-ExecScheduledCommand {
         if (-not $Trigger.ExecutePerResource) {
             try {
                 # For orchestrator-based commands, add TaskInfo to enable post-execution updates
-                if ($Item.Command -eq 'Invoke-CIPPOffboardingJob') {
-                    Write-Information 'Adding TaskInfo to command parameters for orchestrator-based offboarding'
+                if ($Item.Command -in 'Invoke-CIPPOffboardingJob', 'Invoke-CIPPOnboardingJob') {
+                    Write-Information 'Adding TaskInfo to command parameters for the offboarding or onboarding job'
                     $commandParameters['TaskInfo'] = $task
                 }
 
@@ -466,6 +466,9 @@ function Push-ExecScheduledCommand {
                 default { 'The alert finished without reporting a result, so the check may not have completed. See the logbook for this tenant.' }
             }
             Add-CIPPAlertRunHistory -Task $task -Tenant $Tenant -TenantId $TenantInfo.customerId -Outcome $Outcome -Summary $Summary -Counts $AlertRun -StartedUtc $RunStart -ScheduledTime $RunSlot -DurationMs ([int64]([datetime]::UtcNow - $RunStart).TotalMilliseconds) -RecordCompletion:($Outcome -eq 'Completed' -and [bool]$MinimumInterval)
+            if ($Outcome -eq 'Completed' -and [int]$AlertRun.Open -eq 0 -and $task.PostExecution -like '*psa*') {
+                Close-CippExtAlertTicket -TenantFilter $Tenant -ConsolidationKey "$Tenant|$($task.RowKey)" -AlertName $task.Name -ResolvedCount ([int]$AlertRun.Resolved)
+            }
             $results = @($results)
             $TaskType = 'Alert'
         } else {

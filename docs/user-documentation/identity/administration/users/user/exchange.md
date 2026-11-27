@@ -23,6 +23,7 @@ The **Actions** menu acts on this mailbox. Some entries are greyed out rather th
 | Set Retention Policy                        | Applies one of the tenant's retention policies to the mailbox.                                                                                                                                                                                                                                                            |
 | Enable Auto-Expanding Archive               | Allows the archive to grow beyond its initial quota. Greyed out until the archive is enabled, and it cannot be turned off again.                                                                                                                                                                                          |
 | Set Global Address List Visibility          | Hides the mailbox from the Global Address List, or shows it again.                                                                                                                                                                                                                                                        |
+| Set Focused Inbox                           | Turns Focused Inbox on or off for this mailbox, overriding the tenant-wide setting. Greyed out for anything other than a user or shared mailbox.                                                                                                                                                                          |
 | Start Managed Folder Assistant              | Runs the assistant against the mailbox so retention settings and archiving are applied without waiting for the next scheduled pass.                                                                                                                                                                                       |
 | Delete Mailbox                              | Deletes the mailbox.                                                                                                                                                                                                                                                                                                      |
 | Set Copy Sent Items for Delegated Mailboxes | Controls whether mail sent as, or on behalf of, this mailbox is also copied into its Sent Items. Greyed out for anything other than a user or shared mailbox.                                                                                                                                                             |
@@ -46,6 +47,7 @@ The card on the left summarises the mailbox. Its header carries a refresh button
 | Mailbox Type             | The Exchange recipient type, such as `UserMailbox` or `SharedMailbox`.                                                                                                                                               |
 | Hidden from GAL          | Whether the mailbox is hidden from the Global Address List.                                                                                                                                                          |
 | Blocked For Spam         | Whether Microsoft has blocked the mailbox from sending because of spam activity.                                                                                                                                     |
+| Focused Inbox            | Whether Focused Inbox is on for the mailbox.                                                                                                                                                                         |
 | Retention Policy         | The retention policy applied to the mailbox.                                                                                                                                                                         |
 | Mailbox Usage            | How much of the send and receive quota is in use, shown as a bar with the size used and the quota.                                                                                                                   |
 | Forwarding Status        | Whether forwarding is off, or set to an internal or external address.                                                                                                                                                |
@@ -61,6 +63,24 @@ The card on the left summarises the mailbox. Its header carries a refresh button
 {% hint style="info" %}
 The SMTP entry spells out its state rather than relying on the chip colour, because the underlying property records whether SMTP client authentication is _disabled_. A green **SMTP Disabled** chip is the secure outcome, **SMTP Enabled** is the one worth acting on, and **SMTP Unknown** means Exchange did not report the setting.
 {% endhint %}
+
+## Outlook Compose Settings
+
+The card below **Exchange Information** shows how Outlook on the web and the new Outlook compose mail for this mailbox. Classic Outlook for Windows and Mac keeps its own settings and is not affected.
+
+| Field                         | Description                                                                                     |
+| ----------------------------- | ----------------------------------------------------------------------------------------------- |
+| Undo send                     | How many seconds Outlook waits before sending, so the user can take a message back, or **Off**. |
+| Always show From              | Whether the From field shows on every new message.                                              |
+| Always show Bcc               | Whether the Bcc field shows on every new message.                                               |
+| Forgotten attachment reminder | Whether Outlook warns when a message mentions an attachment but has none.                       |
+| Default reply action          | Whether replying defaults to **Reply** or **Reply all**.                                        |
+| Message format                | Whether new messages are HTML or plain text.                                                    |
+| Read receipt requests         | Whether read receipts are sent automatically, never sent, or the user is asked each time.       |
+| Link previews                 | Whether links in messages show a preview.                                                       |
+| Default font                  | The font, size and colour new messages start with.                                              |
+
+**Edit compose settings** opens a dialog with the current values filled in, including the default font, size and colour. Change what you need and confirm; the undo send delay goes up to 10 seconds, and 0 turns it off. The action is greyed out until the current settings have loaded. To set these for every mailbox in a tenant, use the **Set Outlook compose settings for all mailboxes** baseline standard.
 
 ## Proxy Addresses
 
@@ -84,7 +104,7 @@ This card is built from the cached mailbox permission report rather than a live 
 
 ## Calendar Permissions
 
-Who has access to this mailbox's calendar folders, listed by user or group, access rights, folder name and principal type. **Add Permissions** opens a dialog offering the full set of Exchange folder levels: Owner, Publishing Editor, Editor, Publishing Author, Author, Non Editing Author, Reviewer, Contributor, Limited Details, Availability Only and None. A **Delegate with Private item access** switch is available with Editor, which turns the grant into delegate access and lets the delegate see items marked private. The row action removes a permission.
+Who has access to this mailbox's calendar folders, listed by user or group, access rights, folder name and principal type. Grants to people outside the organisation show as `External`, or as `External (published link)` where the calendar was shared with an address outside Microsoft 365 such as Gmail, together with the address it was shared with. External shares are started by the user in Outlook and cannot be added here, but the row action removes them like any other grant. **Add Permissions** opens a dialog offering the full set of Exchange folder levels: Owner, Publishing Editor, Editor, Publishing Author, Author, Non Editing Author, Reviewer, Contributor, Limited Details, Availability Only and None. A **Delegate with Private item access** switch is available with Editor, which turns the grant into delegate access and lets the delegate see items marked private. The row action removes a permission.
 
 ## Contact Permissions
 
@@ -97,6 +117,18 @@ The inbox rules on the mailbox, listed with whether each is enabled, its name, d
 {% hint style="info" %}
 This card is worth a look during a compromise investigation, since rules that move or forward mail are a common way for an intruder to hide their activity. The bec.md tab gathers this alongside the other indicators.
 {% endhint %}
+
+## Mobile Devices
+
+Lists the phones and tablets that connect to this mailbox through Exchange ActiveSync or Outlook for iOS and Android, with each device's model, operating system, access state and the last time it synced. Open a device to see its full details, including when a wipe was requested and when the device confirmed it.
+
+| Action            | Description                                                                                                                                                                                                                              |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Allow Device      | Adds the device to the mailbox's allowed list, so it may sync even when the tenant quarantines or blocks new devices.                                                                                                                    |
+| Block Device      | Adds the device to the mailbox's blocked list.                                                                                                                                                                                           |
+| Account-only Wipe | Removes this account's email, calendar and contacts from the device and leaves everything else on it alone. The wipe runs the next time the device connects. Exchange refuses it for older mail apps that do not support account-only wipe. |
+| Cancel Wipe       | Withdraws a wipe the device has not yet carried out. Available only while a wipe is pending.                                                                                                                                                 |
+| Delete Device     | Removes the device partnership from the mailbox. The device can register again the next time it connects, unless it is blocked.                                                                                                          |
 
 ## Trusted and Blocked Senders/Domains
 

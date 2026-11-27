@@ -191,6 +191,9 @@ $Body = @(foreach ($Tenant in $ByTenant.Keys) {
   A single-tenant read without `-ByTenant` also returns the `<Type>-Count` marker row: skip it. Real examples:
   `Invoke-ListSharepointQuota.ps1`, `Invoke-ListServiceHealthIssues.ps1` (which also collapses the same issue across
   tenants through a dictionary).
+- Don't hand-roll the AllTenants loop (`Get-Tenants` plus a `-Partition` read per tenant, a closure that tallies
+  failures, a check of the `<Type>-Count` row against the rows read). `-ByTenant` and `Get-CIPPReportPage` already
+  scope to the caller's tenants, skip tenants with nothing cached and page by tenant.
 - Request flags compare with `-eq $true` (`$Request.Query.manualPagination -eq $true`), never `-eq 'true'`;
   `backend/Tests/Api/EntrypointBooleanFlags.Tests.ps1` fails the build on the string form.
 
@@ -223,6 +226,7 @@ selector's `ListTenantGroups?TenantSelector=true` lists no groups and the dispat
   All Tenants path honours the request scope (`Get-Tenants`, `Get-CIPPDbItem -TenantFilter allTenants`,
   `Select-CippAllowedTenantData`). The dispatcher runs it with `tenantFilter=AllTenants` and `tenantGroup` in the query,
   narrowed to the group's tenants. `Test-CIPPAccess` refuses a group on an endpoint without the flag, and on any write.
+  So an endpoint never sees `group:` in `tenantFilter`: don't add `-like 'group:*'` guards.
 - **Frontend:** a page accepts a group with `tenantGroupSupport={true}` on its layout. The selection
   (`settings.currentTenant`) is `'group:<id>'` for a group, so every request built from it uses
   `tenantScope(selection)` from `utils/tenant-selection`, which returns `{ tenantFilter }` or `{ tenantGroup }`.

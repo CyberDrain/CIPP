@@ -4,7 +4,6 @@ on:
   pull_request:
     branches:
       - main
-      - dev
     paths:
       - 'backend/Modules/CIPPHTTP/**'
       # entrypoints hand the body to these, and the generator follows the call

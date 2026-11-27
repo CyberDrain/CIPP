@@ -79,6 +79,19 @@ Describe 'Engine: a prepare hook that cannot grade' {
         Should -Invoke Invoke-CIPPBaselineOneDriveLicensedQuota -Times 0 -Exactly
     }
 
+    It 'reports a configuration problem without a reason as a settings error, not an empty cache (<Mode>)' -ForEach @(
+        @{ Mode = 'run' }
+        @{ Mode = 'compare' }
+    ) {
+        Mock Get-CIPPBaselineOneDriveLicensedQuotaState { @{ Current = $null; ConfigError = $true } }
+
+        $Result = Invoke-CIPPBaselineStandard -Item (New-EngineItem) -Mode $Mode -Force
+
+        $Result.Status | Should -Be 'Error'
+        Should -Invoke Invoke-CIPPBaselineOneDriveLicensedQuota -Times 0 -Exactly
+        Should -Invoke Set-CIPPBaselineResult -Times 1 -Exactly -ParameterFilter { $Detail -like "Error: this standard's settings*" }
+    }
+
     It 'keeps a null Current without a reason as create-if-missing: the executor still runs' {
         Mock Get-CIPPBaselineOneDriveLicensedQuotaState { @{ Current = $null } }
 
@@ -150,5 +163,44 @@ Describe 'Engine: capabilities the prepared item needs' {
         }
         Mock Get-CIPPTenantCapabilities { [PSCustomObject]@{ SHAREPOINTENTERPRISE = $true; AAD_PREMIUM_P2 = $true } }
         (Invoke-CIPPBaselineStandard -Item (New-EngineItem) -Mode 'compare').Status | Should -Be 'Skipped - No License'
+    }
+}
+Describe 'Engine: compare-only mode persists nothing' {
+    BeforeEach {
+        Mock Get-CIPPBaselineDefinition { $script:Definition }
+        Mock Get-CIPPAzDataTableEntity { @() }
+        Mock Set-CIPPBaselineResult {}
+        Mock Add-CIPPBaselineHistoryEvent {}
+        Mock Send-CIPPBaselineAlert {}
+        Mock Write-LogMessage {}
+        Mock Invoke-CIPPBaselineOneDriveLicensedQuota {}
+        Mock Get-CIPPBaselineOneDriveLicensedQuotaState { @{ Current = [PSCustomObject]@{ offenders = @(); targets = @() } } }
+    }
+
+    It 'reports a tenant without the licence without writing a row' {
+        Mock Get-CIPPTenantCapabilities { [PSCustomObject]@{ EXCHANGE_S_STANDARD = $true } }
+
+        $Result = Invoke-CIPPBaselineStandard -Item (New-EngineItem) -Mode 'compare' -GradeOnly
+
+        $Result.Status | Should -Be 'Skipped - No License'
+        Should -Invoke Set-CIPPBaselineResult -Times 0 -Exactly
+    }
+
+    It 'reports a licence the prepare hook found missing without writing a row' {
+        Mock Get-CIPPTenantCapabilities { [PSCustomObject]@{ SHAREPOINTENTERPRISE = $true } }
+        Mock Get-CIPPBaselineOneDriveLicensedQuotaState { @{ Current = [PSCustomObject]@{ offenders = @(); targets = @() }; RequiredCapabilities = @('AAD_PREMIUM_P2') } }
+
+        $Result = Invoke-CIPPBaselineStandard -Item (New-EngineItem) -Mode 'compare' -GradeOnly
+
+        $Result.Status | Should -Be 'Skipped - No License'
+        Should -Invoke Set-CIPPBaselineResult -Times 0 -Exactly
+    }
+
+    It 'still writes the row on a normal compare' {
+        Mock Get-CIPPTenantCapabilities { [PSCustomObject]@{ EXCHANGE_S_STANDARD = $true } }
+
+        Invoke-CIPPBaselineStandard -Item (New-EngineItem) -Mode 'compare' | Out-Null
+
+        Should -Invoke Set-CIPPBaselineResult -Times 1 -Exactly -ParameterFilter { $Result.Status -eq 'Skipped - No License' }
     }
 }

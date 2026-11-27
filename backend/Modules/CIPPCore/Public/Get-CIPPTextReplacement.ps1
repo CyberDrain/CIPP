@@ -15,7 +15,7 @@ function Get-CIPPTextReplacement {
         [string]$TenantFilter = $env:TenantID,
         $Text,
         [switch]$EscapeForJson,
-        # An unsaved variable (Name, Value, VariableType) resolved as if stored. Without a tenant, only global variables apply.
+        # An unsaved variable (Name, Value, VariableType, JoinInherited) resolved as if stored. Without a tenant, only global variables apply.
         [hashtable]$PreviewVariable
     )
     # Escapes a replacement value so it can be safely spliced into a serialized JSON
@@ -161,9 +161,13 @@ function Get-CIPPTextReplacement {
     $Tenant = if (-not $NoTenant) { Get-Tenants -TenantFilter $TenantFilter }
     $CustomerId = if ($Tenant.customerId) { $Tenant.customerId } else { $TenantFilter }
 
-    # One read per tenant serves every substitution in this invocation; Initialize-CippRequestContext clears it per request.
-    $script:CIPPVariableMemo ??= @{}
-    $Memo = $script:CIPPVariableMemo[$CustomerId]
+    # One read per tenant serves repeated substitutions. Initialize-CippRequestContext clears it per request; background
+    # workers keep $script: between tasks, so it also expires after 60 s for a variable change to reach them.
+    $Now = [datetime]::UtcNow
+    if (-not $script:CIPPVariableMemo -or $script:CIPPVariableMemo.Expires -lt $Now) {
+        $script:CIPPVariableMemo = @{ Expires = $Now.AddSeconds(60); Tenants = @{} }
+    }
+    $Memo = $script:CIPPVariableMemo.Tenants[$CustomerId]
     if (-not $Memo) {
         # Values are kept unescaped here and escaped at substitution time, so every token - custom and
         # built-in alike - goes through one code path. A typed variable is rendered from the raw value
@@ -171,6 +175,8 @@ function Get-CIPPTextReplacement {
         $Vars = @{}
         $VarTypes = @{}
         $GroupConflicts = @{}
+        # What each tenant row replaced, so a preview of that row joins with the inherited value rather than its own.
+        $Inherited = @{}
 
         # Global and tenant rows in one query. Rows keyed on the domain predate the customerId convention
         # and only count when the tenant has none under its id.
@@ -195,18 +201,19 @@ function Get-CIPPTextReplacement {
                     $GroupConflicts[$Entry.Key] = $Entry.Value.Groups
                     continue
                 }
-                $Vars[$Entry.Key] = $Entry.Value.Value
+                $Vars[$Entry.Key] = Merge-CIPPListVariableValue -InheritedValue $Vars[$Entry.Key] -InheritedType $VarTypes[$Entry.Key] -Value $Entry.Value.Value -VariableType $Entry.Value.VariableType -JoinInherited $Entry.Value.JoinInherited
                 $VarTypes[$Entry.Key] = $Entry.Value.VariableType
             }
             foreach ($Var in $TenantRows) {
                 if (-not $Var.PSObject.Properties['Value']) { continue }
-                $Vars[$Var.RowKey] = $Var.Value
+                $Inherited[$Var.RowKey] = @{ Value = $Vars[$Var.RowKey]; VariableType = $VarTypes[$Var.RowKey] }
+                $Vars[$Var.RowKey] = Merge-CIPPListVariableValue -InheritedValue $Vars[$Var.RowKey] -InheritedType $VarTypes[$Var.RowKey] -Value $Var.Value -VariableType $Var.VariableType -JoinInherited $Var.JoinInherited
                 $VarTypes[$Var.RowKey] = $Var.VariableType
                 $GroupConflicts.Remove($Var.RowKey)
             }
         }
-        $Memo = @{ Vars = $Vars; VarTypes = $VarTypes; GroupConflicts = $GroupConflicts }
-        $script:CIPPVariableMemo[$CustomerId] = $Memo
+        $Memo = @{ Vars = $Vars; VarTypes = $VarTypes; GroupConflicts = $GroupConflicts; Inherited = $Inherited }
+        $script:CIPPVariableMemo.Tenants[$CustomerId] = $Memo
     }
     $Vars = $Memo.Vars
     $VarTypes = $Memo.VarTypes
@@ -214,7 +221,8 @@ function Get-CIPPTextReplacement {
     if ($PreviewVariable) {
         $Vars = $Vars.Clone()
         $VarTypes = $VarTypes.Clone()
-        $Vars[$PreviewVariable.Name] = $PreviewVariable.Value
+        $Base = $Memo.Inherited[$PreviewVariable.Name] ?? @{ Value = $Vars[$PreviewVariable.Name]; VariableType = $VarTypes[$PreviewVariable.Name] }
+        $Vars[$PreviewVariable.Name] = Merge-CIPPListVariableValue -InheritedValue $Base.Value -InheritedType $Base.VariableType -Value $PreviewVariable.Value -VariableType $PreviewVariable.VariableType -JoinInherited $PreviewVariable.JoinInherited
         $VarTypes[$PreviewVariable.Name] = $PreviewVariable.VariableType
     }
     foreach ($Conflict in $GroupConflicts.GetEnumerator()) {

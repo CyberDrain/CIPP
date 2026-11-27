@@ -8,8 +8,15 @@ import { useCustomVariableOptions } from '../../hooks/use-custom-variables'
 
 // Map an effective expected value back onto the standard's variables, so forms can be
 // pre-filled with what is currently applied (e.g. when creating a tenant override).
-export const variableValuesFromExpected = (standard, expectedValue) => {
+export const variableValuesFromExpected = (standard, expectedValue, tierValue) => {
   const values = {}
+  // A standard without an expected template keeps its configured settings on the tier itself.
+  if (!standard?.expected) {
+    Object.keys(standard?.variables ?? {}).forEach((key) => {
+      if (tierValue?.[key] !== undefined) values[key] = tierValue[key]
+    })
+    return values
+  }
   Object.entries(standard?.expected ?? {}).forEach(([key, template]) => {
     if (typeof template === 'string') {
       const match = template.match(/^%(\w+)%$/)
@@ -172,7 +179,8 @@ export const CippBaselineStandardSettings = ({
       ? { required: `${definition.label} is required` }
       : {}
     const declared = definition.validators ?? {}
-    ;['min', 'max', 'maxLength'].forEach((rule) => {
+    // validators.required is editor-only, unlike definition.required, so it can sit on a conditionally hidden field.
+    ;['required', 'min', 'max', 'maxLength'].forEach((rule) => {
       if (declared[rule]) rules[rule] = declared[rule]
     })
     if (declared.pattern) {
@@ -259,7 +267,18 @@ export const CippBaselineStandardSettings = ({
                 options={definition.options}
                 // Definitions may source options from an API instead of a static list
                 // (e.g. the CA template picker) - CippFormComponent handles the fetch.
-                api={definition.api}
+                api={
+                  definition.api?.excludeValuePrefix
+                    ? {
+                        ...definition.api,
+                        dataFilter: (options) =>
+                          options.filter(
+                            (option) =>
+                              !`${option.value}`.startsWith(definition.api.excludeValuePrefix)
+                          ),
+                      }
+                    : definition.api
+                }
                 // Identity pickers are always single-select (the catalog tests enforce it);
                 // list-shaped variables (allowed domains, IP ranges) declare multiple:true.
                 multiple={definition.multiple === true}

@@ -143,6 +143,11 @@ const timeAgoArray = [
   'RecordedAt', // Container update history
   'directTenantAuthDate', // Direct tenant service account
   'ServiceAccountLastAuth', // Direct tenant service account
+  'firstSync', // Mailbox mobile devices
+  'lastSyncAttempt', // Mailbox mobile devices
+  'lastSuccessSync', // Mailbox mobile devices
+  'accountOnlyWipeRequestTime', // Mailbox mobile devices
+  'accountOnlyWipeAckTime', // Mailbox mobile devices
 ]
 
 const matchDateTime =
@@ -368,6 +373,7 @@ export const getCippFormatting = (
     cellName === 'fileStreamSizeInBytes' ||
     cellName === 'cleanupReclaimBytes' ||
     cellName === 'versionEstimateBytes' ||
+    cellName === 'packageSizeInBytes' ||
     cellName === 'ArchiveSize'
   ) {
     //convert bytes to GB
@@ -375,6 +381,7 @@ export const getCippFormatting = (
     if (bytes === null || bytes === undefined) {
       if (
         cellName === 'cleanupReclaimBytes' ||
+        cellName === 'packageSizeInBytes' ||
         cellName === 'versionEstimateBytes'
       ) {
         return isText ? '—' : formatCellText('—', isText)

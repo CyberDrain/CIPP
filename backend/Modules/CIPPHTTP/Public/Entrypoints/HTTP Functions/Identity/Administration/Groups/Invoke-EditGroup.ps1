@@ -33,6 +33,15 @@ function Invoke-EditGroup {
         else { 'Security' }
     }
 
+    # Devices to remove from the group, as options carrying the device's directory object ID
+    $RemoveDevices = $UserObj.RemoveDevice
+    if ($RemoveDevices -and $GroupType -in @('Distribution List', 'Mail-Enabled Security')) {
+        return ([HttpResponseContext]@{
+                StatusCode = [HttpStatusCode]::BadRequest
+                Body       = @{ Results = "Devices cannot be removed from a $GroupType group. No changes were made." }
+            })
+    }
+
     $AddMembers = $UserObj.AddMember
 
     $TenantId = $UserObj.tenantId ?? $UserObj.tenantFilter
@@ -252,6 +261,7 @@ function Invoke-EditGroup {
             $RemoveMembers | ForEach-Object {
                 $Member = $_.addedFields.userPrincipalName ?? $_.value
                 $MemberID = $_.value
+                $MemberLabel = if (-not $_.addedFields.userPrincipalName -and $_.addedFields.displayName) { "$($_.addedFields.displayName) ($MemberID)" } else { $Member }
                 if ($GroupType -eq 'Distribution list' -or $GroupType -eq 'Mail-Enabled Security') {
                     $RemoveMemberGuid = [Guid]::NewGuid().ToString()
                     $Params = @{ Identity = $GroupId; Member = $Member ; BypassSecurityGroupManagerCheck = $true }
@@ -263,7 +273,7 @@ function Invoke-EditGroup {
                             OperationGuid = $RemoveMemberGuid
                         })
                     $ExoLogs.Add(@{
-                            message       = "Removed member $Member from $($GroupName) group"
+                            message       = "Removed member $MemberLabel from $($GroupName) group"
                             target        = $Member
                             OperationGuid = $RemoveMemberGuid
                         })
@@ -274,7 +284,7 @@ function Invoke-EditGroup {
                             url    = "groups/$($GroupId)/members/$MemberID/`$ref"
                         })
                     $GraphLogs.Add(@{
-                            message = "Removed member $Member from $($GroupName) group"
+                            message = "Removed member $MemberLabel from $($GroupName) group"
                             id      = "removeMember-$Member"
                         })
                 }
@@ -282,6 +292,20 @@ function Invoke-EditGroup {
         }
     } catch {
         Write-Warning "Error in RemoveMembers: $($_.Exception.Message)"
+    }
+
+    foreach ($Device in $RemoveDevices) {
+        $DeviceID = $Device.value
+        $DeviceLabel = "$($Device.addedFields.displayName) ($DeviceID)"
+        $BulkRequests.Add(@{
+                id     = "removeDevice-$DeviceID"
+                method = 'DELETE'
+                url    = "groups/$($GroupId)/members/$DeviceID/`$ref"
+            })
+        $GraphLogs.Add(@{
+                message = "Removed device $DeviceLabel from $($GroupName) group"
+                id      = "removeDevice-$DeviceID"
+            })
     }
 
     $AddOwners = $UserObj.AddOwner
@@ -476,6 +500,44 @@ function Invoke-EditGroup {
                 $ExoLogs.Add(@{ message = "Removed Send on Behalf for $User from $($GroupName) group"; target = $GroupId; OperationGuid = $SendOnBehalfGuid; SendOnBehalf = $true })
             }
         }
+
+        # Proxy addresses (aliases) to add to the group, as plain addresses or smtp:-prefixed
+        $AddedAliases = $UserObj.AddedAliases
+        # Proxy addresses (aliases) to remove from the group
+        $RemovedAliases = $UserObj.RemovedAliases
+        $AddAliases, $RemoveAliases = foreach ($AliasList in $AddedAliases, $RemovedAliases) {
+            , @($AliasList | Where-Object { $_ } | ForEach-Object {
+                    $Alias = "$($_.value ?? $_)".Trim()
+                    if ($Alias -match '^[a-z0-9]+:') { $Alias } else { "smtp:$Alias" }
+                })
+        }
+        if ($AddAliases.Count -gt 0 -or $RemoveAliases.Count -gt 0) {
+            $AliasChange = @{ '@odata.type' = '#Exchange.GenericHashTable' }
+            if ($AddAliases.Count -gt 0) { $AliasChange.add = $AddAliases }
+            if ($RemoveAliases.Count -gt 0) { $AliasChange.remove = $RemoveAliases }
+            $Params = @{ Identity = $GroupId; EmailAddresses = $AliasChange }
+            if ($GroupType -eq 'Microsoft 365') {
+                $AliasCmdlet = 'Set-UnifiedGroup'
+            } else {
+                $AliasCmdlet = 'Set-DistributionGroup'
+                $Params.BypassSecurityGroupManagerCheck = $true
+            }
+            # One call carries every alias change, so they share an OperationGuid and succeed or fail together
+            $AliasGuid = [Guid]::NewGuid().ToString()
+            $ExoBulkRequests.Add(@{
+                    CmdletInput   = @{
+                        CmdletName = $AliasCmdlet
+                        Parameters = $Params
+                    }
+                    OperationGuid = $AliasGuid
+                })
+            foreach ($Alias in $AddAliases) {
+                $ExoLogs.Add(@{ message = "Added alias $($Alias -replace '^smtp:') to $($GroupName) group"; target = $GroupId; OperationGuid = $AliasGuid })
+            }
+            foreach ($Alias in $RemoveAliases) {
+                $ExoLogs.Add(@{ message = "Removed alias $($Alias -replace '^smtp:') from $($GroupName) group"; target = $GroupId; OperationGuid = $AliasGuid })
+            }
+        }
     }
 
     Write-Information "Graph Bulk Requests: $($BulkRequests.Count)"
@@ -530,6 +592,30 @@ function Invoke-EditGroup {
                 $Results.Add("Error - $ErrorText")
                 Write-LogMessage -headers $Headers -API $APIName -tenant $TenantId -message "$($ExoResult.Operation.message) failed: $($ExoResult.ErrorMessage)" -Sev 'Error'
             }
+        }
+    }
+
+    # New primary email address for the group; the previous primary stays on the group as an alias
+    $PrimarySmtpAddress = "$($UserObj.PrimarySmtpAddress)".Trim()
+    # Runs after the bulk above on purpose: Exchange refuses EmailAddresses and PrimarySmtpAddress in
+    # one call, and the alias change has to land first when the new primary is one of the added aliases.
+    if ($PrimarySmtpAddress -and $GroupType -in @('Distribution List', 'Mail-Enabled Security', 'Microsoft 365')) {
+        try {
+            $Params = @{ Identity = $GroupId; PrimarySmtpAddress = $PrimarySmtpAddress }
+            if ($GroupType -eq 'Microsoft 365') {
+                $PrimaryCmdlet = 'Set-UnifiedGroup'
+            } else {
+                $PrimaryCmdlet = 'Set-DistributionGroup'
+                $Params.BypassSecurityGroupManagerCheck = $true
+            }
+            $null = New-ExoRequest -tenantid $TenantId -cmdlet $PrimaryCmdlet -cmdParams $Params -useSystemMailbox $true
+            $Message = "Set primary email address of $($GroupName) group to $PrimarySmtpAddress. The previous address is kept as an alias."
+            $Results.Add("Success - $Message")
+            Write-LogMessage -headers $Headers -API $APIName -tenant $TenantId -message $Message -Sev 'Info'
+        } catch {
+            $ErrorMessage = Get-CippException -Exception $_
+            $Results.Add("Error - Failed to set primary email address of $($GroupName) group to $($PrimarySmtpAddress): $($ErrorMessage.NormalizedError)")
+            Write-LogMessage -headers $Headers -API $APIName -tenant $TenantId -message "Failed to set primary email address of $($GroupName) group to $PrimarySmtpAddress. Error: $($ErrorMessage.NormalizedError)" -Sev 'Error' -LogData $ErrorMessage
         }
     }
 

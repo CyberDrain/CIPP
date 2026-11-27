@@ -29,6 +29,10 @@ Select the tenants that you want this role to have access to. If you select `All
 {% hint style="info" %}
 Templates are shared across every tenant, so a role limited to particular tenants, through a list of allowed tenants or any blocked tenants, can create new templates but cannot change or remove existing ones. Only a role that reaches every tenant can.
 {% endhint %}
+
+{% hint style="warning" %}
+A role limited to particular tenants can only use a tenant group that is named in **Allowed Tenants**, whether to view it in the tenant selector or to assign standards, alerts or scheduled tasks to it. `AllTenants` alongside blocked tenants does not count, and neither does adding the group's tenants one by one. A named group is refused if any of its tenants is blocked. See [#tenant-groups-in-a-custom-role](../../../../../setup/resources/how-cipp-evaluates-roles.md#tenant-groups-in-a-custom-role "mention").
+{% endhint %}
 {% endstep %}
 
 {% step %}

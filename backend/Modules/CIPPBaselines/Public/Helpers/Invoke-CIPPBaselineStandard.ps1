@@ -204,7 +204,7 @@ function Invoke-CIPPBaselineStandard {
                 AlertEvent          = $null
                 CacheType           = $null
             }
-            Set-CIPPBaselineResult -Result $Skipped -Prior $null -RunId $RunId
+            if (-not $GradeOnly) { Set-CIPPBaselineResult -Result $Skipped -Prior $null -RunId $RunId }
             $Skipped
         }
 
@@ -423,6 +423,7 @@ function Invoke-CIPPBaselineStandard {
         # read.array descends into each cached row's nested array and flattens the elements
         # into the candidate set BEFORE the filters run. filter.property may be a dot-path.
         $ReadCurrent = {
+            param([switch]$AllRows)
             $Data = @((New-CIPPDbRequest -TenantFilter $TenantFilter -Type $Definition.read.cacheType).Where({ $_ }))
             if ($Definition.read.array) {
                 $Data = @(@(foreach ($Row in $Data) {
@@ -446,6 +447,7 @@ function Invoke-CIPPBaselineStandard {
                         }
                     }))
             }
+            if ($AllRows) { return , $Data }
             $Value = @($Data)[0]
             if ($Definition.read.object -and $null -ne $Value) {
                 foreach ($Segment in ($Definition.read.object -split '\.')) {
@@ -453,6 +455,52 @@ function Invoke-CIPPBaselineStandard {
                 }
             }
             $Value
+        }
+
+        # read.rows: a sweep prepare hook without the hook. Grades every cached row against read.rows.match
+        # as strings (cached Int64 3 = "3", True = true); an error row or a missing field is unreadable.
+        $ReadRows = {
+            $Key = "$($Definition.read.rows.key ?? 'id')"
+            $Match = & $Render $Definition.read.rows.match $Item.Variables
+            $Names = [System.Collections.Generic.List[string]]::new()
+            $Wanted = [System.Collections.Generic.List[string]]::new()
+            foreach ($Property in ($Match ?? [PSCustomObject]@{}).PSObject.Properties) {
+                $Names.Add($Property.Name)
+                $Wanted.Add("$($Property.Value)")
+            }
+            if ($Names.Count -eq 0) { return @{ Current = $null; NoDataReason = 'no settings are configured'; ConfigError = $true } }
+
+            $Rows = & $ReadCurrent -AllRows
+            $Offending = [System.Collections.Generic.List[string]]::new()
+            $Unreadable = [System.Collections.Generic.List[string]]::new()
+            $Total = 0
+            foreach ($Row in $Rows) {
+                $Id = $Row.$Key
+                if (-not $Id) { continue }
+                $Total++
+                if ($Row.error) { $Unreadable.Add("$Id"); continue }
+                $State = 0
+                for ($i = 0; $i -lt $Names.Count; $i++) {
+                    $Have = $Row.($Names[$i])
+                    if ($null -eq $Have) { $State = 2; break }
+                    if ("$Have" -ne $Wanted[$i]) { $State = 1 }
+                }
+                if ($State -eq 2) { $Unreadable.Add("$Id") } elseif ($State -eq 1) { $Offending.Add("$Id") }
+            }
+            if ($Total -eq 0) { return @{ Current = $null } }
+            if ($Unreadable.Count -eq $Total) {
+                return @{ Current = $null; NoDataReason = "no row of the $($Definition.read.cacheType) cache could be read ($Total of $Total failed)" }
+            }
+            $Targets = @(foreach ($Id in $Offending) { [PSCustomObject]@{ id = $Id } })
+            $Offending.Sort([System.StringComparer]::CurrentCultureIgnoreCase)
+            $Unreadable.Sort([System.StringComparer]::CurrentCultureIgnoreCase)
+            @{
+                Current = [PSCustomObject]@{
+                    offenders  = $Offending.ToArray()
+                    unreadable = $Unreadable.ToArray()
+                    targets    = $Targets
+                }
+            }
         }
 
         # Cache pre-check for TEMPLATE standards only, keyed on read.requiredCaches which only
@@ -491,11 +539,12 @@ function Invoke-CIPPBaselineStandard {
             }
         }
 
-        if ($Definition.prepare) {
-            if ($Definition.prepare -notmatch '^Get-CIPPBaseline[A-Za-z0-9]+$' -or -not (Get-CIPPBaselineCommand -Name $Definition.prepare)) {
+        if ($Definition.prepare -or $Definition.read.rows) {
+            $Prepare = if ($Definition.read.rows) { $ReadRows } else { $Definition.prepare }
+            if (-not $Definition.read.rows -and ($Definition.prepare -notmatch '^Get-CIPPBaseline[A-Za-z0-9]+$' -or -not (Get-CIPPBaselineCommand -Name $Definition.prepare))) {
                 throw "Prepare function $($Definition.prepare) is not available."
             }
-            $Prepared = & $Definition.prepare -Item $Item -TenantFilter $TenantFilter
+            $Prepared = & $Prepare -Item $Item -TenantFilter $TenantFilter
             # Capabilities only the selected item needs (any-of), e.g. a CA template with risk conditions needs P2.
             if ($Prepared.RequiredCapabilities -and $Mode -ne 'oneoff') {
                 $Capabilities ??= $(try { Get-CIPPTenantCapabilities -TenantFilter $TenantFilter } catch { $null })
@@ -506,13 +555,13 @@ function Invoke-CIPPBaselineStandard {
             if ($null -eq $Prepared.Current -and $CacheCollector -and -not $JustRefreshed -and -not $Prepared.ConfigError) {
                 try {
                     $null = & $CacheCollector @CollectorArgs
-                    $Prepared = & $Definition.prepare -Item $Item -TenantFilter $TenantFilter
+                    $Prepared = & $Prepare -Item $Item -TenantFilter $TenantFilter
                 } catch {
                     $CollectorFailure = $_.Exception.Message
                     Write-Information "Baselines: cache collection for $($Definition.read.cacheType) on $TenantFilter failed: $($_.Exception.Message)"
                 }
             }
-            $PrepareNoDataReason = "$($Prepared.NoDataReason)"
+            $PrepareNoDataReason = if ($Prepared.NoDataReason) { "$($Prepared.NoDataReason)" } elseif ($Prepared.ConfigError) { "this standard's settings in the baseline are incomplete or invalid - edit the baseline and fill in its settings" }
             if ($null -ne $Prepared.Expected) {
                 $ExpectedTemplate = $Prepared.Expected
                 $Expected = $Prepared.Expected
@@ -721,7 +770,8 @@ function Invoke-CIPPBaselineStandard {
         }
 
         $Expires = if ("$($Prior.DeviationExpires)" -match '^\d+$') { [int64]$Prior.DeviationExpires } else { 0 }
-        $AcceptActive = $PriorStatus -eq 'Accepted' -and ($Expires -eq 0 -or $Now -lt $Expires)
+        # A row accepted property by property tolerates only those properties.
+        $AcceptActive = $PriorStatus -eq 'Accepted' -and ($Expires -eq 0 -or $Now -lt $Expires) -and -not ($AcceptedKeys.Count -gt 0 -and $Differences.Count -gt 0)
         $RemediateOnExpire = $PriorStatus -eq 'Accepted' -and $Expires -gt 0 -and $Now -ge $Expires -and [bool]$Prior.RemediateOnExpire
         # A denied deviation is an operator order: remediate regardless of configured posture.
         $DeniedRemediate = $PriorStatus -eq 'Denied - Remediate Pending'

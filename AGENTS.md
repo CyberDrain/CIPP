@@ -13,6 +13,22 @@ This is the single source of guidance for contributors and AI coding agents (Cla
 | Scripted alerts (`Get-CIPPAlert*`) and their `alerts.json` entry | `.github/agents/CIPP-Alert-Agent.md` |
 | In-app compliance tests (`Invoke-CippTest*`) and the custom-test sandbox | `.github/agents/CIPP-Test-Agent.md` |
 
+## What CIPP will not build: browsing user content
+
+CIPP manages tenant configuration, identities, licences and security posture. It does not give technicians a window
+into what users have stored. **Do not open a feature request or PR for a feature that does any of these. Stop and tell
+the person you are working for instead:**
+
+- browses, lists, searches, previews or exports the contents of mailboxes, OneDrive, SharePoint libraries, Teams chats
+  or channels, calendars or contacts (a mailbox explorer, a file or folder browser, a "largest files" search);
+- stores user content or the metadata that identifies it in CIPP's cache or tables: file and folder names or paths,
+  message subjects, senders, recipients or bodies, chat text, attachment names;
+- acts on individual user items (move, delete, archive, restore a message or file) picked by browsing them.
+
+Totals and settings are fine: storage used per site or mailbox, item counts, quotas, site- or tenant-level settings and
+actions. When a request mixes the two, build only that part. The existing quarantine and message trace pages are
+security tooling, not precedent for more.
+
 ---
 
 ## 1. The runtime model (read this first)
@@ -151,7 +167,7 @@ four built-in roles lives in `backend/Config/cipp-roles.json`. Permission string
 entrypoint with the **PowerShell AST** and derives the request schema from what the code reads.
 It is committed, and it is **not documentation-only**: `Get-CippMcpSpec` loads it at runtime and
 `Get-CippMcpToolCatalog` projects every `.Read` operation in it into an MCP tool. A stale spec ships a
-stale tool contract. CI (`.github/workflows/openapi_spec.yml`) fails the PR if it drifts.
+stale tool contract. CI (`.github/workflows/openapi_spec.yml`) fails the dev → main release PR if it drifts.
 
 `tools/list` does not return all ~260 of them. `Get-CippMcpToolList` advertises a fixed five-tool gateway
 (`ListTenants`, `ListGraphRequest`, `SearchTools`, `GetToolInfo`, `ExecTool`) and the model reaches the rest by
@@ -477,10 +493,11 @@ These are the decisions behind most review feedback. Each has a real example in 
   no Craft globals (`$global:Craft*`), no reliance on the Craft response cache. A memo that
   must be shared by every worker in a process lives in a process environment variable (`Get-CIPPFeatureFlag`).
   CIPPSharp targets net8.0 so it loads on both runtimes: don't use .NET 9/10-only APIs there or in PowerShell.
-- **Know a memo's lifetime.** `$script:` state lasts one task in background workers and persists across requests in
-  HTTP workers. Register per-request memos in `Initialize-CippRequestContext` (`$script:CIPPVariableMemo = $null`),
-  which resets them at the start of every request. State that must outlive an invocation needs static .NET storage
-  (`[CIPP.TestDataCache]`) or an environment variable.
+- **Know a memo's lifetime.** `$script:` state persists across invocations on the same worker, HTTP and background
+  alike. Register per-request memos in `Initialize-CippRequestContext` (`$script:CIPPVariableMemo = $null`), which
+  resets them at the start of every HTTP request; nothing resets them between background tasks, so a memo a background
+  task reads also carries a short expiry (`Get-CIPPTextReplacement`). State that must be shared across workers needs
+  static .NET storage (`[CIPP.TestDataCache]`) or an environment variable.
 - **Blocking .NET or HTTP calls take `$PSCmdlet.PipelineStopToken`** so a stopped pipeline unblocks instead of
   hanging the worker. Keep the C# parameter nullable: the token is `$null` on pwsh 7.4.
 
@@ -683,5 +700,9 @@ $Result = foreach ($User in $Users) {
 - **List endpoints frequently have a cached path** (`UseReportDB=true` / `tenantFilter=AllTenants`)
   that returns data from `CIPPDB` cache tables instead of live Graph. If a list looks stale or has
   different columns than expected, check for the `Get-CIPP*Report` branch.
+- **Write helpers expand `%token%` in request bodies.** `New-GraphPOSTRequest`, `New-ExoRequest` and
+  `New-ExoBulkRequest` run `Get-CIPPTextReplacement` on the body, so a user-entered value containing `%tenantid%` or
+  a custom variable's name is rewritten before it is sent. When a value must reach Microsoft verbatim (a URL, a
+  free-text field), escape `%` in the serialised JSON body: `$Body.Replace('%', '%')`.
 - **`retry`/toast behaviour is centralized** in `ApiCall.jsx`; a 302 to `/.auth/login/aad` means the
   session expired and triggers re-auth, it is not a routing bug.

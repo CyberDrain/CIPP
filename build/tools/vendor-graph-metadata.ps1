@@ -104,3 +104,5 @@ if ($Check) {
 $ManifestPath = Join-Path $OutputPath 'manifest.json'
 $Manifest | ConvertTo-Json -Depth 5 | Set-Content -Path $ManifestPath -Encoding utf8
 Write-Host "Wrote $ManifestPath"
+
+& "$PSScriptRoot/Update-IntuneGraphSchema.ps1" -MetadataPath (Join-Path $OutputPath 'beta.xml')

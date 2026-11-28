@@ -10,7 +10,7 @@
   "impact": "High Impact",
   "helpText": "Manages the enabled state, group targeting and per-method settings of every authentication method the baseline configures. Methods left unconfigured are never touched.",
   "executiveText": "Standardizes which sign-in methods are available and to whom - enabling phishing-resistant methods and retiring weak ones consistently across the fleet.",
-  "docsDescription": "Grades each configured method: enabled state, include targeting (a named group or all users), an optional exclude group, and method-specific settings - Microsoft Authenticator feature states, Temporary Access Pass lifetimes, QR code settings and Email OTP external access. The graded value is one list naming every drift. Remediation writes only the drifted methods through the shared authentication policy helper.",
+  "docsDescription": "Grades each configured method: enabled state, include targeting (one or more comma-separated groups, or all users), optional exclude groups (comma-separated), and method-specific settings - Microsoft Authenticator feature states, Temporary Access Pass lifetimes, QR code settings and Email OTP external access. The graded value is one list naming every drift. Remediation writes only the drifted methods through the shared authentication policy helper.",
   "impactColour": "error",
   "addedDate": "2026-08-16",
   "powershellEquivalent": "Set-CIPPAuthenticationPolicy",
@@ -45,7 +45,7 @@
       "label": "Microsoft Authenticator: state (Not Configured = leave as-is)"
     },
     "MicrosoftAuthenticatorGroup": {
-      "label": "Microsoft Authenticator: target group (blank = all users)",
+      "label": "Microsoft Authenticator: target groups (comma-separated, blank = all users)",
       "omitWhenBlank": true,
       "type": "textField"
     },
@@ -70,7 +70,7 @@
       "label": "FIDO2 Security Keys: state (Not Configured = leave as-is)"
     },
     "FIDO2Group": {
-      "label": "FIDO2 Security Keys: target group (blank = all users)",
+      "label": "FIDO2 Security Keys: target groups (comma-separated, blank = all users)",
       "omitWhenBlank": true,
       "type": "textField"
     },
@@ -95,7 +95,7 @@
       "label": "Temporary Access Pass: state (Not Configured = leave as-is)"
     },
     "TAPGroup": {
-      "label": "Temporary Access Pass: target group (blank = all users)",
+      "label": "Temporary Access Pass: target groups (comma-separated, blank = all users)",
       "omitWhenBlank": true,
       "type": "textField"
     },
@@ -120,7 +120,7 @@
       "label": "Software OATH Tokens: state (Not Configured = leave as-is)"
     },
     "SoftwareOathGroup": {
-      "label": "Software OATH Tokens: target group (blank = all users)",
+      "label": "Software OATH Tokens: target groups (comma-separated, blank = all users)",
       "omitWhenBlank": true,
       "type": "textField"
     },
@@ -145,7 +145,7 @@
       "label": "Hardware OATH Tokens: state (Not Configured = leave as-is)"
     },
     "HardwareOathGroup": {
-      "label": "Hardware OATH Tokens: target group (blank = all users)",
+      "label": "Hardware OATH Tokens: target groups (comma-separated, blank = all users)",
       "omitWhenBlank": true,
       "type": "textField"
     },
@@ -170,7 +170,7 @@
       "label": "SMS: state (Not Configured = leave as-is)"
     },
     "SMSGroup": {
-      "label": "SMS: target group (blank = all users)",
+      "label": "SMS: target groups (comma-separated, blank = all users)",
       "omitWhenBlank": true,
       "type": "textField"
     },
@@ -195,7 +195,7 @@
       "label": "Voice Call: state (Not Configured = leave as-is)"
     },
     "VoiceGroup": {
-      "label": "Voice Call: target group (blank = all users)",
+      "label": "Voice Call: target groups (comma-separated, blank = all users)",
       "omitWhenBlank": true,
       "type": "textField"
     },
@@ -220,7 +220,7 @@
       "label": "Email OTP: state (Not Configured = leave as-is)"
     },
     "EmailGroup": {
-      "label": "Email OTP: target group (blank = all users)",
+      "label": "Email OTP: target groups (comma-separated, blank = all users)",
       "omitWhenBlank": true,
       "type": "textField"
     },
@@ -245,7 +245,7 @@
       "label": "Certificate-Based Authentication: state (Not Configured = leave as-is)"
     },
     "x509CertificateGroup": {
-      "label": "Certificate-Based Authentication: target group (blank = all users)",
+      "label": "Certificate-Based Authentication: target groups (comma-separated, blank = all users)",
       "omitWhenBlank": true,
       "type": "textField"
     },
@@ -270,57 +270,57 @@
       "label": "QR Code Pin: state (Not Configured = leave as-is)"
     },
     "QRCodePinGroup": {
-      "label": "QR Code Pin: target group (blank = all users)",
+      "label": "QR Code Pin: target groups (comma-separated, blank = all users)",
       "omitWhenBlank": true,
       "type": "textField"
     },
     "MicrosoftAuthenticatorExcludeGroup": {
-      "label": "Microsoft Authenticator: exclude group",
+      "label": "Microsoft Authenticator: exclude groups (comma-separated)",
       "omitWhenBlank": true,
       "type": "textField"
     },
     "FIDO2ExcludeGroup": {
-      "label": "FIDO2 Security Keys: exclude group",
+      "label": "FIDO2 Security Keys: exclude groups (comma-separated)",
       "omitWhenBlank": true,
       "type": "textField"
     },
     "TAPExcludeGroup": {
-      "label": "Temporary Access Pass: exclude group",
+      "label": "Temporary Access Pass: exclude groups (comma-separated)",
       "omitWhenBlank": true,
       "type": "textField"
     },
     "SoftwareOathExcludeGroup": {
-      "label": "Software OATH Tokens: exclude group",
+      "label": "Software OATH Tokens: exclude groups (comma-separated)",
       "omitWhenBlank": true,
       "type": "textField"
     },
     "HardwareOathExcludeGroup": {
-      "label": "Hardware OATH Tokens: exclude group",
+      "label": "Hardware OATH Tokens: exclude groups (comma-separated)",
       "omitWhenBlank": true,
       "type": "textField"
     },
     "SMSExcludeGroup": {
-      "label": "SMS: exclude group",
+      "label": "SMS: exclude groups (comma-separated)",
       "omitWhenBlank": true,
       "type": "textField"
     },
     "VoiceExcludeGroup": {
-      "label": "Voice Call: exclude group",
+      "label": "Voice Call: exclude groups (comma-separated)",
       "omitWhenBlank": true,
       "type": "textField"
     },
     "EmailExcludeGroup": {
-      "label": "Email OTP: exclude group",
+      "label": "Email OTP: exclude groups (comma-separated)",
       "omitWhenBlank": true,
       "type": "textField"
     },
     "x509CertificateExcludeGroup": {
-      "label": "Certificate-Based Authentication: exclude group",
+      "label": "Certificate-Based Authentication: exclude groups (comma-separated)",
       "omitWhenBlank": true,
       "type": "textField"
     },
     "QRCodePinExcludeGroup": {
-      "label": "QR Code Pin: exclude group",
+      "label": "QR Code Pin: exclude groups (comma-separated)",
       "omitWhenBlank": true,
       "type": "textField"
     },

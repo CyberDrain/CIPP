@@ -161,6 +161,18 @@ Describe 'Get-CIPPBaselineAuthenticationMethodsState' {
         $Prepared.Current.remediationSets[0].Params.ExcludeGroupIds | Should -Be @('g-admins')
     }
 
+    It 'excludes several comma-separated groups from one method' {
+        Mock New-CIPPDbRequest {
+            if ($Type -eq 'AuthenticationMethodsPolicy') { @($script:AuthPolicy | ConvertTo-Cached) } else {
+                @(@{ id = 'g-admins'; displayName = 'Admins' }, @{ id = 'g-pilot'; displayName = 'CIPPTestPilot' } | ConvertTo-Cached)
+            }
+        }
+        $Item = [PSCustomObject]@{ Variables = [PSCustomObject]@{ MicrosoftAuthenticatorEnabled = $true; MicrosoftAuthenticatorExcludeGroup = 'Admins, CIPPTestPilot' } }
+        $Prepared = Get-CIPPBaselineAuthenticationMethodsState -Item $Item -TenantFilter $script:Tenant
+        $Prepared.Current.methodsOutOfPolicy | Should -Match 'Microsoft Authenticator: excludeTargets'
+        @($Prepared.Current.remediationSets[0].Params.ExcludeGroupIds | Sort-Object) | Should -Be @('g-admins', 'g-pilot')
+    }
+
     It 'leaves the include targets alone when the target group does not resolve' {
         $PilotPolicy = @{ authenticationMethodConfigurations = @(
                 @{ id = 'Sms'; state = 'disabled'; includeTargets = @(@{ id = 'g-pilot'; targetType = 'group' }) }

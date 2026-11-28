@@ -1138,7 +1138,7 @@
       "NIST SP 800-171 (3.5.3)"
     ],
     "helpText": "Manages the enabled state, group targeting and per-method settings of every authentication method the baseline configures. Methods left unconfigured are never touched.",
-    "docsDescription": "Grades each configured method: enabled state, include targeting (a named group or all users), an optional exclude group, and method-specific settings - Microsoft Authenticator feature states, Temporary Access Pass lifetimes, QR code settings and Email OTP external access. The graded value is one list naming every drift. Remediation writes only the drifted methods through the shared authentication policy helper.",
+    "docsDescription": "Grades each configured method: enabled state, include targeting (one or more comma-separated groups, or all users), optional exclude groups (comma-separated), and method-specific settings - Microsoft Authenticator feature states, Temporary Access Pass lifetimes, QR code settings and Email OTP external access. The graded value is one list naming every drift. Remediation writes only the drifted methods through the shared authentication policy helper.",
     "executiveText": "Standardizes which sign-in methods are available and to whom - enabling phishing-resistant methods and retiring weak ones consistently across the fleet.",
     "label": "Configure Authentication Methods",
     "impact": "High Impact",
@@ -1177,7 +1177,7 @@
       },
       {
         "name": "standards.AuthenticationMethods.MicrosoftAuthenticatorGroup",
-        "label": "Microsoft Authenticator: target group (blank = all users)",
+        "label": "Microsoft Authenticator: target groups (comma-separated, blank = all users)",
         "omitWhenBlank": true,
         "type": "textField"
       },
@@ -1204,7 +1204,7 @@
       },
       {
         "name": "standards.AuthenticationMethods.FIDO2Group",
-        "label": "FIDO2 Security Keys: target group (blank = all users)",
+        "label": "FIDO2 Security Keys: target groups (comma-separated, blank = all users)",
         "omitWhenBlank": true,
         "type": "textField"
       },
@@ -1231,7 +1231,7 @@
       },
       {
         "name": "standards.AuthenticationMethods.TAPGroup",
-        "label": "Temporary Access Pass: target group (blank = all users)",
+        "label": "Temporary Access Pass: target groups (comma-separated, blank = all users)",
         "omitWhenBlank": true,
         "type": "textField"
       },
@@ -1258,7 +1258,7 @@
       },
       {
         "name": "standards.AuthenticationMethods.SoftwareOathGroup",
-        "label": "Software OATH Tokens: target group (blank = all users)",
+        "label": "Software OATH Tokens: target groups (comma-separated, blank = all users)",
         "omitWhenBlank": true,
         "type": "textField"
       },
@@ -1285,7 +1285,7 @@
       },
       {
         "name": "standards.AuthenticationMethods.HardwareOathGroup",
-        "label": "Hardware OATH Tokens: target group (blank = all users)",
+        "label": "Hardware OATH Tokens: target groups (comma-separated, blank = all users)",
         "omitWhenBlank": true,
         "type": "textField"
       },
@@ -1312,7 +1312,7 @@
       },
       {
         "name": "standards.AuthenticationMethods.SMSGroup",
-        "label": "SMS: target group (blank = all users)",
+        "label": "SMS: target groups (comma-separated, blank = all users)",
         "omitWhenBlank": true,
         "type": "textField"
       },
@@ -1339,7 +1339,7 @@
       },
       {
         "name": "standards.AuthenticationMethods.VoiceGroup",
-        "label": "Voice Call: target group (blank = all users)",
+        "label": "Voice Call: target groups (comma-separated, blank = all users)",
         "omitWhenBlank": true,
         "type": "textField"
       },
@@ -1366,7 +1366,7 @@
       },
       {
         "name": "standards.AuthenticationMethods.EmailGroup",
-        "label": "Email OTP: target group (blank = all users)",
+        "label": "Email OTP: target groups (comma-separated, blank = all users)",
         "omitWhenBlank": true,
         "type": "textField"
       },
@@ -1393,7 +1393,7 @@
       },
       {
         "name": "standards.AuthenticationMethods.x509CertificateGroup",
-        "label": "Certificate-Based Authentication: target group (blank = all users)",
+        "label": "Certificate-Based Authentication: target groups (comma-separated, blank = all users)",
         "omitWhenBlank": true,
         "type": "textField"
       },
@@ -1420,67 +1420,67 @@
       },
       {
         "name": "standards.AuthenticationMethods.QRCodePinGroup",
-        "label": "QR Code Pin: target group (blank = all users)",
+        "label": "QR Code Pin: target groups (comma-separated, blank = all users)",
         "omitWhenBlank": true,
         "type": "textField"
       },
       {
         "name": "standards.AuthenticationMethods.MicrosoftAuthenticatorExcludeGroup",
-        "label": "Microsoft Authenticator: exclude group",
+        "label": "Microsoft Authenticator: exclude groups (comma-separated)",
         "omitWhenBlank": true,
         "type": "textField"
       },
       {
         "name": "standards.AuthenticationMethods.FIDO2ExcludeGroup",
-        "label": "FIDO2 Security Keys: exclude group",
+        "label": "FIDO2 Security Keys: exclude groups (comma-separated)",
         "omitWhenBlank": true,
         "type": "textField"
       },
       {
         "name": "standards.AuthenticationMethods.TAPExcludeGroup",
-        "label": "Temporary Access Pass: exclude group",
+        "label": "Temporary Access Pass: exclude groups (comma-separated)",
         "omitWhenBlank": true,
         "type": "textField"
       },
       {
         "name": "standards.AuthenticationMethods.SoftwareOathExcludeGroup",
-        "label": "Software OATH Tokens: exclude group",
+        "label": "Software OATH Tokens: exclude groups (comma-separated)",
         "omitWhenBlank": true,
         "type": "textField"
       },
       {
         "name": "standards.AuthenticationMethods.HardwareOathExcludeGroup",
-        "label": "Hardware OATH Tokens: exclude group",
+        "label": "Hardware OATH Tokens: exclude groups (comma-separated)",
         "omitWhenBlank": true,
         "type": "textField"
       },
       {
         "name": "standards.AuthenticationMethods.SMSExcludeGroup",
-        "label": "SMS: exclude group",
+        "label": "SMS: exclude groups (comma-separated)",
         "omitWhenBlank": true,
         "type": "textField"
       },
       {
         "name": "standards.AuthenticationMethods.VoiceExcludeGroup",
-        "label": "Voice Call: exclude group",
+        "label": "Voice Call: exclude groups (comma-separated)",
         "omitWhenBlank": true,
         "type": "textField"
       },
       {
         "name": "standards.AuthenticationMethods.EmailExcludeGroup",
-        "label": "Email OTP: exclude group",
+        "label": "Email OTP: exclude groups (comma-separated)",
         "omitWhenBlank": true,
         "type": "textField"
       },
       {
         "name": "standards.AuthenticationMethods.x509CertificateExcludeGroup",
-        "label": "Certificate-Based Authentication: exclude group",
+        "label": "Certificate-Based Authentication: exclude groups (comma-separated)",
         "omitWhenBlank": true,
         "type": "textField"
       },
       {
         "name": "standards.AuthenticationMethods.QRCodePinExcludeGroup",
-        "label": "QR Code Pin: exclude group",
+        "label": "QR Code Pin: exclude groups (comma-separated)",
         "omitWhenBlank": true,
         "type": "textField"
       },

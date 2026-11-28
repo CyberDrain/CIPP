@@ -6,7 +6,8 @@ function Get-CIPPBaselineAuthenticationMethodsState {
     .DESCRIPTION
         The classic's ten-method matrix, ported whole. Only methods the operator configured
         grade at all; each graded method contributes its drifts - state, include-target
-        set (a named group resolved from the Groups cache, or all_users), and the
+        set (comma-separated group names resolved from the Groups cache, or all_users),
+        the exclude set, and the
         method-specific extras: Microsoft Authenticator's software OATH flag and three
         feature states, Temporary Access Pass's five numbers, QR code's two, and Email
         OTP's external-id flag and exclude targets.
@@ -74,12 +75,27 @@ function Get-CIPPBaselineAuthenticationMethodsState {
     $NeedsGroups = @($Configured.Where({ $_.Enabled -and (-not [string]::IsNullOrWhiteSpace($_.GroupName) -or -not [string]::IsNullOrWhiteSpace($_.ExcludeGroupName)) })).Count -gt 0
     if ($NeedsGroups) { $Groups = @(Get-CIPPBaselineCacheRows -TenantFilter $TenantFilter -Type 'Groups' -Fields 'displayName', 'Id') }
     $GroupIdCache = @{}
+    # A field may hold several comma-separated group names. A name with no match leaves the whole field unresolved.
     $ResolveGroup = {
-        param($Name)
-        if ($GroupIdCache.ContainsKey($Name)) { return $GroupIdCache[$Name] }
-        $Ids = @($Groups | Where-Object { "$($_.displayName)".StartsWith($Name) } | ForEach-Object { "$($_.id)" })
-        $GroupIdCache[$Name] = $(if ($Ids.Count -gt 0) { $Ids } else { $null })
-        $GroupIdCache[$Name]
+        param($Raw)
+        $AllIds = [System.Collections.Generic.List[string]]::new()
+        foreach ($Part in "$Raw".Split(',')) {
+            $Name = $Part.Trim()
+            if (-not $Name) { continue }
+            if (-not $GroupIdCache.ContainsKey($Name)) {
+                $Ids = [System.Collections.Generic.List[string]]::new()
+                foreach ($Group in $Groups) {
+                    if ("$($Group.displayName)".StartsWith($Name)) { $Ids.Add("$($Group.id)") }
+                }
+                $GroupIdCache[$Name] = $Ids
+            }
+            if ($GroupIdCache[$Name].Count -eq 0) { return $null }
+            foreach ($Id in $GroupIdCache[$Name]) {
+                if (-not $AllIds.Contains($Id)) { $AllIds.Add($Id) }
+            }
+        }
+        if ($AllIds.Count -eq 0) { return $null }
+        , $AllIds.ToArray()
     }
 
     $AllDrifts = [System.Collections.Generic.List[string]]::new()
